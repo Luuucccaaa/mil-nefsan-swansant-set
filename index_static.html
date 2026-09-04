@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mé 67</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg" href="favicon.svg" />
+  <link rel="stylesheet" href="retour.css">
+  <style>
+    /* ── Écran intro (couleurs inversées : fond blanc, texte rouge) ── */
+    #intro-screen {
+      /* ↓↓↓ Réglages rapides ↓↓↓ */
+      --intro-fade-word-duration: 1.5s; /* durée du fondu du reste du texte */
+      --intro-1967-pause: 0.35s;        /* pause entre la disparition du texte et celle de "1967" */
+      --intro-fade-1967-duration: 2s; /* durée du fondu du mot "1967" lui-même */
+      --intro-arrow-size: 2.4rem;       /* taille de l'icône flèche */
+      --intro-bar-width: 300px;         /* longueur de la barre de lecture audio */
+      --intro-bar-height: 6px;          /* épaisseur de la barre de lecture audio */
+      --intro-sentence-size: 4rem;       /* taille texte étape 1 (phrase FR) — valeur fixe simple */
+      --intro-sentence-line-height: 0.9;  /* interligne étape 1 */
+      --intro-creole-size: 7rem;          /* taille texte étape 2 (créole) — valeur fixe simple */
+      --intro-box-max-width: 1300px;        /* largeur max de la boîte de texte (↑ pour moins de retours à la ligne) */
+      --intro-vertical-shift: -40px;       /* décale tout vers le haut (négatif) ou le bas (positif) pour corriger l'effet d'optique */
+
+      position: fixed;
+      inset: 0;
+      background: var(--rouge, rgb(255,255,255));
+      color: var(--vert, rgb(111,23,23));
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .intro-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 44px;
+      max-width: var(--intro-box-max-width);
+      transform: translateY(var(--intro-vertical-shift));
+    }
+
+    /* ── Étape 1 : phrase révélée mot par mot ── */
+    .intro-sentence {
+      font-family: 'Manif', serif;
+      font-size: var(--intro-sentence-size);
+      line-height: var(--intro-sentence-line-height);
+      color: var(--vert, rgb(111,23,23));
+    }
+
+    .intro-sentence br {
+      content: "";
+      display: block;
+      margin-top: 0.5em;
+    }
+
+    .intro-word {
+      display: inline-block;
+      opacity: 0;
+      transition: opacity var(--intro-fade-word-duration) ease;
+    }
+    .intro-word.shown { opacity: 1; }
+    .intro-word.fade-1967 { transition: opacity var(--intro-fade-1967-duration) ease; }
+
+    #intro-arrow-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: 'Manif', serif;
+      font-size: var(--intro-arrow-size);
+      line-height: 1;
+      color: var(--vert, rgb(111,23,23));
+      opacity: 0;
+      transition: opacity 0.6s ease, transform 0.2s ease;
+    }
+    #intro-arrow-btn.shown { opacity: 1; }
+    #intro-arrow-btn:hover { transform: translateX(8px); }
+
+    /* ── Étape 2 : phrase créole + audio ── */
+    #intro-creole {
+      font-family: 'Manif', serif;
+      font-size: var(--intro-creole-size);
+      line-height: var(--intro-creole-line-height);
+      color: var(--vert, rgb(111,23,23));
+      opacity: 0;
+      transition: opacity 0.9s ease;
+    }
+    #intro-creole.shown { opacity: 1; }
+
+    #intro-audio-progress-wrap {
+      width: var(--intro-bar-width);
+      height: var(--intro-bar-height);
+      background: rgba(111,23,23,0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+    }
+    #intro-audio-progress-wrap.shown { opacity: 1; }
+
+    #intro-audio-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--vert, rgb(111,23,23));
+      transition: width 0.2s linear;
+      border-radius: 2px;
+    }
+
+    #intro-skip-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 28px;
+      font-family: 'Legende', sans-serif;
+      font-size: 0.75rem;
+      color: rgba(111,23,23,0.45);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: color 0.2s;
+    }
+    #intro-skip-btn:hover { color: rgba(111,23,23,0.85); }
+
+    /* ── Bouton ressources fin de page ── */
+    #btn-ressources-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 80px 0 120px;
+    }
+
+    .btn-ressources {
+      font-family: 'Manif', serif;
+      font-size: clamp(1.5rem, 3vw, 3rem);
+      color: var(--vert);
+      background: transparent;
+      border: 2px solid var(--vert);
+      padding: 16px 40px;
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-ressources:hover {
+      background: var(--vert);
+      color: var(--rouge);
+    }
+  </style>
+</head>
+<body class="static">
+
+  <!-- ── Écran d'intro : phrase révélée mot par mot, puis audio ── -->
+  <div id="intro-screen">
+
+    <div id="intro-step1" class="intro-step">
+      <div id="intro-sentence" class="intro-sentence"></div>
+      <button id="intro-arrow-btn" aria-label="Continuer">→</button>
+    </div>
+
+    <div id="intro-step2" class="intro-step" style="display:none;">
+      <div id="intro-creole">mil nèfsan swasant-sèt</div>
+      <div id="intro-audio-progress-wrap">
+        <div id="intro-audio-progress-fill"></div>
+      </div>
+    </div>
+
+    <button id="intro-skip-btn">passer →</button>
+  </div>
+
+  <!-- ── Contenu principal (caché jusqu'à fin audio) ── -->
+  <div id="main-content" style="display:none; opacity:0; transition: opacity 1s ease;">
+
+  <div id="progress-bar"></div>
+
+  <div id="stage">
+    <div id="text-layer"></div>
+    <div id="media-layer"></div>
+  </div>
+
+  <div id="btn-ressources-wrap">
+    <a href="ressources.html" class="btn-ressources">ressources →</a>
+  </div>
+
+  </div><!-- /#main-content -->
+
+  <script id="data" type="application/json">
+  {
+    "paragraphs": [
+      [
+       "En", "septembre", "1966,", "la", { "w": "Guadeloupe", "style": "outline" }, "\n",
+       "est", "frappée", "par", { "w": "l'ouragan", "style": "outline" }, { "w": "Inez", "style": "outline" }, "\n",
+       "avec", "«", "une", "cruauté", { "w": "diabolique.", "style": "outline" }, "»", "\n",
+       "Inez", "laisse", "derrière", "lui", "un", "archipel",
+       { "w": "meurtri,", "style": "outline" }, "des", { "w": "habitations", "style": "outline" }, "effondrées,",
+       "des", "champs", "dévastés,", "des", "familles",
+       "réduites", "à", "devoir", "survivre", "dans", "\n",
+       "les", { "w": "décombres", "style": "outline" }, "de", "ce", "qu'elles", "\n",
+       "avaient", { "w": "construit.", "style": "outline" }, "La", { "w": "Guadeloupe,", "style": "outline" },
+       "département", "français", "depuis", "1946,",
+       "demeure", "une", "terre", "où", "la", "misère",
+       "n'est", "pas", "un", { "w": "accident.", "style": "outline" }, "Les", "maisons",
+       "qui", "s'effondrent", "sous", "les", "rafales", "\n",
+       "de", "vent", "ne", "sont", "pas", "des", "anomalies.", "\n",
+       "Les", "infrastructures", "insuffisantes", "\n",
+       "et", "la", { "w": "dépendance", "style": "outline" }, "économique", "\n",
+       "à", "la", "métropole", "lointaine,", "ne", "sont", "\n",
+       "pas", "des", "réalités", "créées", "par", { "w": "Inez,", "style": "outline" }, "\n",
+       "il", "les", "a", "seulement", "mises", "à", "nu.", "\n",
+       "La", "réponse", "de", "l'État", "français",
+       "est", "lente,", "partielle,", "marquée", "par", "cette",
+       { "w": "condescendance", "style": "outline" }, "administrative", "qui",
+       "traite", "ses", "territoires", "d'Outre-Mer",
+       "comme", "des", "annexes", "géographiques.",
+       "Les", "aides", "ont", "du", "mal", "à", "arriver.", "\n",
+       "Les", "promesses", "de", "reconstruction", "\n",
+       "se", "perdent", "dans", "les", "couloirs",
+       "ministériels.", "Et", "la", "population",
+       "guadeloupéenne,", "déjà", "fragilisée,",
+       "aborde", "l'année", "1967", "dans", "un", "état", "\n",
+       "de", "disette", "et", "d'amertume."
+     ],
+
+      [
+        "À", "la", "violence", "climatique", "succède,", 
+        "presque", "sans", "transition,", "la", "violence", 
+        "politique.", "Les", "élections", { "w": "législatives", "style": "outline" }, 
+        "des", "5", "et", "12", "mars", "1967", "sont", "marquées", 
+        "par", "la", "méthode", "d'un", "seul", "homme,", "\n", 
+        "le", "préfet", { "w": "Pierre", "style": "outline" }, { "w": "Bolotte.", "style": "outline" }, "Pressions", 
+        "sur", "les", "électeurs", "et", { "w": "irrégularités", "style": "outline" }, 
+        "dans", "le", "déroulement", "du", "scrutin",
+        "dévoilent", "des", "mécanismes", "de", 
+        { "w": "contrôle", "style": "outline" }, "que", "l'administration",
+        "préfectorale", "exerce", "sur", "la", "vie", 
+        { "w": "politique", "style": "outline" }, "locale", "et", "composent", "\n", 
+        "un", "tableau", "peu", "compatible", "avec", "\n", 
+        "les", "idéaux", "républicains", "dont", "Paris", "\n", 
+        "se", "targue", "volontiers.", "Mais", { "w": "Bolotte", "style": "outline" }, 
+        "n'invente", "rien,", "il", "applique", "avec", 
+        "méthode", "ce", "que", "les", "pouvoirs", "coloniaux", 
+        "ont", "toujours", "su", "faire.", "\n", 
+        "Il", "maintient", "une", "légitimité", "apparente", 
+        "tout", "en", "s'assurant", "que", "les", "résultats", 
+        "restent", "dans", "les", "clous", "de", "ce", "\n", 
+        "que", "la", "métropole", "juge", { "w": "bon", "style": "outline" }, "pour", "\n", 
+        "la", "Guadeloupe.", "Le", "préfet", "confisque", "\n", 
+        "la", "capacité", "de", "toute", "une", "population", "\n", 
+        "à", "choisir", "ses", "représentants.", "\n", 
+        "La", "parole", { "w": "politique", "style": "outline" }, "est", "étouffée",
+        "avant", "d'avoir", "pu", "se", "former,", "alors", "\n", 
+        "les", { "w": "actes", "style": "outline" }, "finissent", "par", "prendre", "\n", 
+        "le", "relais", "de", "la", { "w": "parole.", "style": "outline" }, "La", "Guadeloupe", 
+        "de", "1967", "est", "une", "société", "à", "qui", "l'État", 
+        "Français", "dit", ":", "«", "Vous", "êtes", "français", ".»", 
+        "Mais", "cette", "appartenance,", "souvent", 
+        "brandie", "comme", "un", "privilège,", "révèle",
+        "ses", "limites.", "La", "Guadeloupe", "reste", 
+        "française", "dans", "les", "textes,", "mais", "\n", 
+        "pas", "toujours", "dans", "les", "esprits.",
+        "L'égalité", "clamée", "par", "la", "République", 
+        "se", "heurte", "encore", "aux", "mentalités", 
+        "héritées", "de", "l'époque", "coloniale.", "\n", 
+        "Dans", "une", "société", "où", "les", "rapports", "\n", 
+        "de", "pouvoir", "demeurent", "largement",
+        "structurés", "par", "la", "couleur", "de", { "w": "peau", "style": "outline" }, "\n", 
+        "et", "la", "position", "sociale,", "bon", "nombre", 
+        "continuent", "d'occuper", "les", "positions",
+        "dominantes", "et", "considèrent", "les", 
+        "revendications", "des", "Guadeloupéens", 
+        "avec", "condescendance.", "Derrière", "\n", 
+        "le", "discours", "officiel", "de", "l'assimilation", 
+        "subsiste", "l'idée", "que", "certains", "seraient", 
+        "plus", "légitimes", "que", "d'autres", "à", "diriger", 
+        "ou", "à", "décider.", "L'écart", "entre", "l'égalité", 
+        "promise", "et", "la", { "w": "réalité", "style": "outline" }, "vécue", "nourrit", 
+        "alors", "un", "profond", { "w": "ressentiment", "style": "outline" }, "\n", 
+        "qui", "ne", "cesse", "de", "grandir", "à", "mesure", "\n", 
+        "que", "les", "frustrations", "économiques,", 
+        "sociales", "et", "politiques", "s'accumulent."
+      ],
+
+      [
+        "Du", "20", "au", "22", "mars", "1967,", "la", "commune", 
+        "de", { "w": "Basse-Terre", "style": "outline" }, "devient", "le", "théâtre", 
+        "d'une", "violente", "série", { "w": "d'émeutes,", "style": "outline" }, 
+        "conséquences", "de", { "w": "l'agression", "style": "outline" }, "\n", 
+        "de", { "w": "Raphaël", "style": "outline" }, { "w": "Balzinc", "style": "outline" }, "cordonnier", 
+        "ambulant", "par", { "w": "Vladimir,", "style": "outline" }, { "w": "Srnsky,", "style": "outline" }, 
+        "propriétaire", "d'une", { "w": "boutique", "style": "outline" }, "\n", 
+        "de", "chaussures.", "Cette", "provocation", 
+        "rappelle", "que", "les", "fractures", "\n", 
+        "de", "l'archipel", "sont", "aussi", "inscrites", "\n", 
+        "dans", "la", "violence", "ordinaire", "que", 
+        "certains", "se", "permettent", "d'exercer", 
+        "en", "vertu", "d'une", "hiérarchie", "que", "\n", 
+        "la", { "w": "République", "style": "outline" }, "a", "pourtant", "abolie", "sur","\n", 
+        "le", "papier.", "En", "Guadeloupe,", "coexistent", "des", "communautés",
+        "dont", "les", "rapports", "sont", "structurés", "par", "des", "héritages",
+        "de", "domination", "que", "la", "loi", "ne", "suffit", "\n", 
+        "pas", "à", "effacer.", "La", "décolonisation", 
+        "institutionnelle", "n'a", "pas", "produit", "\n", 
+        "la", "décolonisation", "des", "esprits,", "\n", 
+        "ni", "celle", "des", "pratiques", "sociales."
+      ],
+
+      [
+        "C'est", "à", "partir", "du", "24", "mai", "1967,", "\n", 
+        "que", "les", "rues", "de", "Pointe-à-Pitre", 
+        "voient", "s'organiser", "un", { "w": "mouvement", "style": "outline" }, 
+        "ouvrier", "dont", "l'ampleur", "traduit", 
+        "l'accumulation", "des", "doléances.", "\n", 
+        "Les", "ouvriers", "du", "bâtiment", 
+        "guadeloupéens", "investissent", "\n", 
+        "la", "rue", "pour", "réclamer", "ce", "que", "tout", 
+        "travailleur", "est", "en", "droit", "d'espérer,", 
+        "un", "alignement", "sur", "les", "salaires", "\n", 
+        "des", "ouvriers", "de", "la", { "w": "métropole", "style": "outline" }, "\n", 
+        "et", "des", "conditions", "de", "travail",
+        "décentes.", "Ces", "revendications", "\n", 
+        "ne", "sont", "pas", "révolutionnaires", "dans", 
+        "leur", "nature.", "Mais", "en", "Guadeloupe,", 
+        "elles", "prennent", "une", "autre", "dimension,", 
+        "parce", "qu'elles", "s'ancrent", "dans", "un",
+        "contexte", "où", "l'inégalité", "économique", 
+        "est", "inséparable", "de", "l'inégalité", { "w": "raciale", "style": "outline" }, 
+        "et", "coloniale.", "Au-delà", "de", "simplement",
+        "réclamer", "un", "salaire,", "ces", "ouvriers", 
+        "revendiquent", "aussi", "une", "dignité.", "\n", 
+        "La", "mobilisation", "est", "importante", "\n", 
+        "et", "les", "cortèges", "arpentent", "les", "allées", 
+        "de", { "w": "Pointe-à-Pitre", "style": "outline" }, "On", "manifeste.", "\n", 
+        "On", "crie.", "On", "espère", "encore", "que", "\n", 
+        "le", "dialogue", "soit", "possible."
+      ],
+
+      [
+        "Le", "26", "mai", "1967,", "la", "marche", "dérape.", 
+        "Alors", "que", "les", "négociations", "avec", "\n", 
+        "le", "patronat", "sont", "déjà", "au", "point", "mort,", 
+        "les", "discussions", "s'interrompent", 
+        "définitivement,", "envenimées", "par", "\n",
+        "des", { "w": "déclarations", "style": "outline" }, "envers", "les", 
+        "ouvriers,", "de", { "w": "Georges", "style": "outline" }, { "w": "Brizard", "style": "outline" }, 
+        "président", "du", "syndicat", "des", 
+        "entrepreneurs", "du", "bâtiment.", "\n",
+        "La", "foule,", "déjà", "en", "état", "d'ébullition,", 
+        "explose.", "Un", "objet", "contondant", "atteint", 
+        "un", "policier", "à", "la", "tête,", "poussant", "les", 
+        "forces", "de", "l'ordre", "à", "ouvrir", "le", "feu.", "\n",
+        "Les", "tirs", "ne", "sont", "pas", "des", "sommations.", 
+        "Ils", "atteignent", "les", "corps.", "Parmi", "les", 
+        "premiers", "tués,", { "w": "Jacques", "style": "outline" }, { "w": "Nestor,", "style": "outline" }, 
+        "devient", "rapidement", "le", "symbole", "\n",
+        "du", "moment", "où", "un", "pouvoir", "cesse", "\n",
+        "de", "prétendre", "négocier", "et", "a", "choisi", 
+        "d'utiliser", "la", { "w": "violence.", "style": "outline" }, "Le", "bilan", 
+        "humain", "exact", "de", "ces", "journées", 
+        "demeure,", "aujourd'hui,", "une", "question",
+        "ouverte.", "Les", "chiffres", { "w": "officiels", "style": "outline" }, "ont", 
+        "longtemps", "été", "contestés", "par", "les", 
+        "témoins,", "les", "familles", "et", "les", "militants.", 
+        "Certains", "évoquent", "des", "dizaines", "\n", 
+        "de", "tués,", "quand", "d'autres,", "avec", "\n", 
+        "plus", "de", "prudence,", "s'en", "tiennent", "\n", 
+        "à", "des", "chiffres", { "w": "moindres,", "style": "outline" }, "mais", "\n",
+        "non", "moins", "tragiques.", "Ce", "que",  "\n", 
+        "l'on", "sait", "cependant", "avec", "certitude,", 
+        "c'est", "que", "des", "guadeloupéens", "ont", "été", 
+        { "w": "tués", "style": "outline" }, "dans", "les", "rues", "de", "leur", "ville", "par",
+        "des", "forces", "de", "police", { "w": "françaises.", "style": "outline" },  "\n",
+        "Et", "que", "cela", "s'est", "passé", "en", "1967,",  "\n",
+        "une", "vingtaine", "d'années", "après", "que",  "\n",
+        "la", "Guadeloupe", "ait", "officiellement", 
+        { "w": "cessé", "style": "outline" }, "d'être", "une", "colonie."
+      ],
+
+      [
+        "La", "balle", "qui", "a", "tué", { "w": "Jacques", "style": "outline" }, { "w": "Nestor", "style": "outline" },  "\n",
+        "à", "par", "la", "même", "occasion", "éliminé",
+        "l'image", "de", "l'assimilation", "heureuse", "\n",
+        "et", "de", "la", "France", "indivisible.", "Dans", "\n", 
+        "les", "semaines", "et", "les", "mois", "qui", "suivent", 
+        "les", "événements", "de", "mai,", "la", "justice", 
+        "prend", "le", "relais.", "Des", "procès", 
+        "s'ouvrent.", "Ils", "ont", "pour", "objectif", 
+        "d'établir", "les", "responsabilités", "\n",
+        "et", "de", "nommer", "les", "fautes.", "\n",
+        "Le", "commissaire", { "w": "Jean", "style": "outline" }, { "w": "Canales", "style": "outline" },
+        "chargé", "des", "opérations", "lors", "de", 
+        "l'ouverture", "du", "feu,","ne", "se", "présente", 
+        "pas", "à", "l'audience.", "Son", "absence", "\n", 
+        "est", "non", "seulement", "tolérée,", "mais,", 
+        "selon", "les", "témoignages", "activement",
+        { "w": "couverte", "style": "outline" }, "par", "l'institution", "policière", 
+        "elle-même.", "L'appareil", "d'État,", "qui", 
+        "avait", "ordonné", "ou", "laissé", "faire", "les",
+        "tirs,", "s'emploie", "à", "protéger", "ceux", "qui", 
+        "les", "ont", "exécutés.", "L'état", "protège", "la", 
+        "police.", "Et", "les", "familles", "des", "victimes", 
+        "apprennent,", "une", "fois", "de", "plus,", "que", "les", 
+        "institutions", "de", "la", "République", "ne", "leur", 
+        "appartiennent", "pas", "au", "même", "titre", 
+        "qu'aux", "autres.", "Ce", "procès", "manqué",
+        "est,", "à", "sa", "manière,", "aussi", "grave", "que", 
+        "les", "coups", "de", "feu", "du", "26", "mai.", "Il", "dit", ":", "\n",
+        "«", "Vos", "vies", "valent", "moins", "que", "\n",
+        "la", "carrière", "d'un", "commissaire.", "»"
+      ],
+
+      [
+        "Après", "ça,", "les", "événements", "de", "mai", 
+        "1967", "sont", "classés", "secret.", "Pendant", 
+        "des", "décennies,", "les", "archives", "restent",
+        "inaccessibles,", "les", "témoignages", 
+        "dispersés,", "la", "mémoire", "collective", 
+        "fragmentée", "par", "une", "chape", 
+        "institutionnelle", "que", "l'on", "ne", "peut", 
+        "appeler", "autrement", "que", "ce", "qu'elle",
+        "est,", "une", "politique", "de", { "w": "l'oubli.", "style": "outline" }, "\n", 
+        "La", "Guadeloupe", "de", "1967", "n'est", "pas", "\n",
+        "une", "anomalie", "dans", "l'histoire.","\n",  
+        "Et", "il", "n'est", "pas", "secret", "que", "les", 
+        "événements", "de", "mai", "1967", "ont", 
+        "commencé", "à", "sortir", "de", "l'ombre", 
+        "grâce", "au", "travail", "des", "historiens,", "\n",  
+        "des", "militants,", "des", "familles", "qui", "\n", 
+        "n'ont", "jamais", "renoncé", "à", "nommer", "\n", 
+        "ce", "qu'il", "s'était", "passé,", "précisément", 
+        "au", "moment", "où", "les", "sociétés", 
+        "contemporaines,", "en", "France", "\n",  
+        "et", "ailleurs,", "ont", "recommencés", "\n", 
+        "à", "interroger", "les", "fondations", 
+        "coloniales", "sur", "lequelles","ont", "été", "\n", 
+        "bâtis", "leurs", "imaginaires", "collectifs."
+      ],
+
+      [
+        "Les", "métropoles", "ont", "toujours", "\n", 
+        "eu", "un", "intérêt", "limité", "pour", "les", 
+        "catastrophes", "qu'elles", "provoquent", 
+        "dans", "leurs", "périphéries.", "Non", "par", 
+        "malveillance", "absolue,", "mais", "par", "\n", 
+        "une", "combinaison", "d'indifférence", 
+        "structurelle", "et", "d'intérêt", "bien", 
+        "compris.", "Reconnaître", "le", "massacre", 
+        "de", { "w": "Pointe-à-Pitre", "style": "outline" }, "c'est", "reconnaître", 
+        "que", "la", "départementalisation", "n'a", "pas",
+        "tenu", "ses", "promesses.", "C'est", "admettre", 
+        "que", "l'égalité", "républicaine", "est,", "aux", 
+        "Antilles,", "une", "construction", "partielle.",
+        "C'est", "ouvrir", "une", "brèche", "dans", "un", 
+        "narratif", "national", "dont", "la", "cohérence", 
+        "repose", "sur", "l'idée", "que", "la", "France",
+        "traite", "ses", "citoyens", "de", "la", "même", 
+        "manière,", "quel", "que", "soit", "l'endroit", "où", 
+        "ils", "vivent.", "Mais", "les", "empires", "portent", 
+        "en", "eux", "une", "fragilité", "particulière.", "\n", 
+        "Les", "violences", "exercées", "contre", "\n", 
+        "la", "périphérie", "ne", "concernent", "jamais", 
+        "seulement", "ceux", "qui", "les", "subissent", 
+        "directement.", "Lorsqu'elles", "sont", 
+        "tolérées", "parce", "qu'elles", "se", "déroulent",
+        "loin", "du", "centre,", "elles", "finissent", "par", "\n", 
+        "s'y", "enraciner.", "Les", "territoires", 
+        "coloniaux", "deviennent", "alors", "des", "lieux",
+        "où", "on", "expérimente,", "on", "perfectionne", 
+        "et", "on", "banalise", "des", "pratiques", "\n", 
+        "de", "domination", "qui,", "avec", "le", "temps,",
+        "peuvent", "être", "réemployées", "ailleurs.", 
+        "Croire", "que", "ces", "violences", "n'engagent", 
+        "que", "des", "populations", "lointaines", "\n", 
+        "est","une", "illusion.", "Ce", "qui", "est", "accepté", "ou", "ignoré",
+        "là-bas", "aujourd'hui", "peut", "devenir", "possible", "ici", "demain."
+      ]
+    ],
+
+    "medias": [
+
+    {
+        "after": 0,
+        "anchor": 10,
+        "type": "audio",
+        "src": "franceinter_cyclone.mp3",
+        "title": "Inter actualités de 20H00 du 29 septembre 1966",
+        "caption": "France Inter, 29 septembre 1966.",
+        "pos": { "top": "63%", "right": "1%" },
+        "size": "28%",
+        "duration": 5,
+        "transcript": {
+          "fr": "Enfin, la tornade qui a secoué la Côte d’Azur aujourd’hui n’est pratiquement rien en comparaison du cyclone qui s’est abattu sur un autre département français, à quelque 7 000 km de la métropole. Ce département, c’est la Guadeloupe. Et à l’heure actuelle, Jacques Bal, l’ouragan Inez se dirige à 20 km/h vers Haïti. Là encore, les habitants vont vivre de longues heures d’angoisse, mais c’est sans doute à la Guadeloupe que l’ouragan a frappé avec le plus de violence.\n\n Le premier bilan est éloquent : 23 morts, 500 blessés, et plus de 10 000 sans-abri. Ce sont les petites communes rurales qui ont le plus souffert. Les habitations sont, la plupart du temps, composées de paillotes, de cases très fragiles qui ne résistent pas à des vents de 250 km/h. À Saint-François, aux Abymes, au Gosier, c’est un véritable spectacle de désolation. Les bananeraies, les champs de canne à sucre ont été littéralement balayés par l’ouragan. \n\nCertains bâtiments en dur n’ont pas résisté au cyclone. À Pointe-à-Pitre, les bâtiments de l’ORTF ont été détruits ; un seul émetteur est en état de fonctionner pour l’instant, un second doit être mis en service dans la soirée. Dès les premières heures du sinistre, le plan ORSEC a été appliqué, avec d’ailleurs une grande efficacité. Des médecins, des vivres, des médicaments et du matériel destinés aux sinistrés sont aussi arrivés à Pointe-à-Pitre. \n\nMais bien sûr, ce n’est pas suffisant. Déjà, de nombreux organismes ont lancé des appels de solidarité en faveur des sinistrés de la Guadeloupe. La Croix-Rouge française reçoit des dons en espèces, 17 rue Quentin-Bauchart, Paris 8e, compte chèque postal 5 000 00, avec la mention : « Pour les sinistrés de la Guadeloupe ». \n\nLe Secours catholique, de son côté, vient lui aussi d’effectuer un envoi important vers Pointe-à-Pitre. Il y avait en particulier, dans les colis, du lait et des vêtements. Alors, ceux qui le désirent peuvent adresser leurs dons au compte chèque postal suivant : 5 620 009, à Paris, et là encore avec la mention : « Guadeloupe ». Mais je vais répéter le numéro de ce compte chèque postal : 5 620 009, à Paris.\n\n Le Secours populaire français enfin reçoit des dons en espèces au compte chèque postal 654 37, toujours à Paris. Le ministre chargé des départements et territoires d’outre-mer, M. Pierre Bilotte, quittera lundi matin Paris pour Pointe-à-Pitre. \n\nMauvais temps également sur la Côte d’Azur, mais en beaucoup moins grave, une trombe d’eau…"
+        }
+      },
+
+      
+
+      {
+        "after": 0,
+        "anchor": 4,
+        "type": "image",
+        "src": "Archives_PointeaPitre_66.jpg",
+        "caption": "Une ruelle entre les cases de la ville (Pointe-à-Pitre 1966).",
+        "pos": { "top": "5%", "left": "75%" },
+        "size": "20%",
+        "duration": 6
+      },
+
+      {
+        "after": 0,
+        "anchor": 11,
+        "type": "image",
+        "src": "cyclone.png",
+        "pos": { "top": "25%", "left": "3%" },
+        "size": "20%",
+        "duration": 7
+      },
+
+      {
+        "after": 5,
+        "anchor": 16,
+        "type": "image",
+        "src": "Archives_Journal_Cyclone_2.jpg",
+        "caption": "Journal <em>France-Antilles</em> du 30 septembre 1966, relatant les dégâts causés par l'ouragan. On y lit : « Inez a proprement assommé et dépouillé la Guadeloupe. Elle s'est acharnée sur notre île pendant plus de quatre heures avec une cruauté diabolique. »",
+        "pos": { "top": "12%", "left": "80%" },
+        "size": "15%",
+        "duration": 5
+      },
+
+      {
+        "after": 8,
+        "anchor":25,
+        "type": "image",
+        "src": "Cyclone3.png",
+        "caption": "Une du journal <em>France-Antilles</em> du 30 septembre 1966.",
+        "pos": { "top": "12%", "left": "2%" },
+        "size": "25%",
+        "duration": 5
+      },
+
+      {
+        "after": 10,
+        "anchor": 27,
+        "type": "image",
+        "src": "cyclone inez_0.png",
+        "caption": "29 septembre 1966, Pointe-à-Pitre, Guadeloupe. Une maison gît, renversée à un angle improbable, après le passage de l’ouragan Inez, qui a ravagé l’île. Des centaines d’habitations ont été détruites sous la violence de la tempête, dont les vents ont atteint 193 km/h (120 mph). Au moins 23 personnes ont trouvé la mort et 10 000 habitants se sont retrouvés sans abri.",
+        "pos": { "top": "17%", "left": "78%" },
+        "size": "20%",
+        "duration": 10
+      },
+
+      {
+        "after": 20,
+        "anchor": 41,
+        "type": "image",
+        "src": "cyclone2.png",
+        "caption": "Journal <em>France-Antilles</em> du 30 septembre 1966, relatant les dégâts causés par l'ouragan.",
+        "pos": { "top": "12%", "left": "67%" },
+        "size": "30%",
+        "duration": 5
+      },
+
+      {
+        "after": 21,
+        "anchor":47,
+        "type": "image",
+        "src": "PAP.jpg",
+        "caption": "Vu aérienne de Pointe-à-Pitre après le passage de l'ouragan.",
+        "pos": { "top": "30%", "left": "2%" },
+        "size": "20%",
+        "duration": 5
+      },
+
+      {
+        "after": 25,
+        "anchor": 49,
+        "type": "video",
+        "src": "video_carnaval.mp4",
+        "caption": "Les rues de Pointe-à-Pitre pendant le carnaval de 1962.",
+        "pos": { "top": "50%", "left": "6%" },
+        "size": "25%",
+        "duration": 5
+      },
+
+      {
+        "after": 30,
+        "anchor": 63,
+        "type": "audio",
+        "src": "sé_tan_nou.mp3",
+        "title": "<em>La Gwadloup sé tan nou</em>",
+        "caption": "Jacky Richard, 2009.",
+        "pos": { "top": "65%", "right": "9%" },
+        "size": "28%",
+        "duration": 20,
+        "transcript": {
+          "GCF": "Wi Gwadloupéyen, sé lè-la ki rivé pou nou mèt nou doubout! \nWi doubout, kont tout pwofitasyon! \nLKP rouvè zyé an nou! \n\nLa Gwadloup sé tan nou, la Gwadloup sé pa ta yo \nYo pé ké fè sa yo vlé, sa yo vlé an péyi an nou. \nLa Gwadloup sé tan nou, la Gwadloup sé pa ta yo \nYo pé ké fè sa yo vlé, sa yo vlé an péyi an nou.",
+          "fr": "Oui Guadeloupéens, l'heure est arrivée de nous lever ! \nOui, levons nous contre toute exploitation ! \nLKP nous a ouvert les yeux ! \n\nLa Guadeloupe c'est à nous, la Guadeloupe n’est pas à eux \nIls ne pourront pas faire ce qu’ils veulent, ce qu’ils veulent avec notre pays \nLa Guadeloupe c'est à nous, la Guadeloupe n’est pas à eux \nIls ne pourront pas faire ce qu’ils veulent, ce qu’ils veulent avec notre pays."
+        }
+      },
+
+      {
+        "after": 45,
+        "anchor": 86,
+        "type": "audio",
+        "src": "gwadloup_malad.mp3",
+        "title": "<em>La Gwadloup malad</em>",
+        "caption": "Guy Konkèt, Aux Ondes, 1967.",
+        "pos": { "top": "35%", "right": "70%" },
+        "size": "28%",
+        "duration": 20,
+        "transcript": {
+          "GCF": "Kriyé, députés \nKriyé, sénatè \nSé moun-la absan, misiyé \nOu ka représanté nou, misiyé \nSa fè mélé \nNou ka pozé nou kestyon, misiyé \nKi jou, misiyé, nou ké rivé ? \nRétrouvon nou kè, misiyé \nPou sové nou mé zanmi, ça va allé \n\nMes frères, la gwadloup malad oh \nMes frères, la gwadloup malad oh \nWi, mes frères, la gwadloup malad oh \nNou ké trouvé rimède, pou nou sauvé péyi-la, mes zanmi.",
+          "fr": "Appelez les députés \nAppelez les sénateurs \nCes gens sont absents, monsieur \nVous nous représentez, monsieur \nÇa crée du désordre \nNous nous posons des questions, monsieur \nQuel jour, monsieur, arriverons-nous ? \nRetrouvons notre cœur, monsieur \nPour nous sauver, mes amis, ça va aller.\n\n Mes frères, la Guadeloupe est malade oh \nMes frères, la Guadeloupe est malade oh \nOui, mes frères, la Guadeloupe est malade oh \nTrouvons un remède, pour sauver le pays, mes amis."
+        }
+      },
+
+      {
+        "after": 60,
+        "anchor": 101,
+        "type": "image",
+        "src": "pointe-à-pitre_cyclone-INES-1966-revue-paralleles.jpg",
+        "caption": "Une rue de Pointe-à-Pitre innondée après le passage de l'ouragan Inez, 1966.",
+        "pos": { "bottom": "50%", "right": "78%" },
+        "size": "20%",
+        "duration": 20
+      },      
+
+      {
+        "after": 60,
+        "anchor": 101,
+        "type": "image",
+        "src": "place_victoire.jpg",
+        "caption": "Place de la Victoire à Pointe-à-Pitre près le passage de l'ouragan Inez, 1966.",
+        "pos": { "bottom": "15%", "right": "2%" },
+        "size": "20%",
+        "duration": 20
+      },
+
+      {
+        "after": 75,
+        "anchor": 122,
+        "type": "quote",
+        "text": " Les nègres, vous le savez, n’ont que trop travaillé\n Pourquoi faut-il de plus apprendre dans les livres\n Qui nous parlent de choses qui ne sont point d’ici\n Et puis elle est vraiment trop triste leur école \n Triste comme\n Ces Messieurs de la ville\n Ces Messieurs comme il faut\n Qui ne savent plus danser le soir au clair de lune\n Qui ne savent plus marcher sur la chair de leurs pieds \nQui ne savent plus conter les contes aux veillées \nSeigneur, je ne veux plus aller à leur école.",
+        "author": "Guy Tirolien",
+        "date": "1961",
+        "source": "« Prière d’un petit enfant nègre », dans <em>Balles d'or</em>, Présence Africaine.",
+        "pos": { "top": "30%", "right": "4%" },
+        "size": "28%",
+        "duration": 20
+      },
+
+      {
+        "after": 150,
+        "anchor": 183,
+        "type": "image",
+        "src": "Archives_legislatives.jpg",
+        "caption": "Résultats des élections législatives de 1967.",
+        "pos": { "bottom": "55%", "right": "2%" },
+        "size": "20%",
+        "duration": 25
+      },
+
+      {
+        "after": 155,
+        "anchor": 202,
+        "type": "quote",
+        "text": "Ainsi, Pierre Bolotte veilla non seulement au financement de l’association par le FASSO à partir de 1966, mais incita fortement certaines communes à lui verser des subventions. Déplorant les réticences de l’administration locale de la santé et le faible concours du milieu médical guadeloupéen, il n’hésita pas en outre, tel un responsable du MFPF en métropole, à organiser lui-même l’acheminement illégal de stérilets en utilisant en son nom propre la valise diplomatique et tint à superviser personnellement l’action des responsables de l’association en vue de l’amplifier, se mettant ainsi volontiers en scène, dans ses rapports avec sa tutelle, en entrepreneur zélé de la cause contraceptive toujours prêt à prendre des risques et à braver les interdits au nom d’un intérêt réputé supérieur, transposant vraisemblablement un savoir-faire et des dispositions acquises dans le travail contre-insurrectionnel en Algérie.",
+        "author": "Francis Sanseigne",
+        "date": "2020",
+        "source": "« L’État contre lui-même. Contraception et illégalismes d’État de la métropole aux DOM (1961-1967) », dans <em>Genèses</em> 2020/4 n° 121, Belin.",
+        "pos": { "top": "30%", "right": "72%" },
+        "size": "25%",
+        "duration": 25
+      },
+
+      {
+        "after": 160,
+        "anchor": 208,
+        "type": "audio",
+        "src": "rodes1.mp3",
+        "title": "Témoignage de Maître Félix Rodes, avocat et ancien bâtonnier de l'Ordre des avocats de la Guadeloupe, figure du mouvement anticolonial guadeloupéen et de mai 67, sur les élections legislatives de 1967.",
+        "caption": "<em>Sonjé Mé 67</em>, épisode 1, Danik Zandwonis, 2007.",
+        "pos": { "top": "55%", "right": "7%" },
+        "size": "28%",
+        "duration": 25,
+        "transcript": {
+          "fr": "Sur ce se greffe l'incident raciste de srnsky qui avait organisé avec l'UDR je crois, ou le RPR, le parti de de Gaulle, qui avait organisé la fraude électorale. Et Gerty Archimède qui avait été élue députée, nous sommes en 67, en février mars 67. Gerty Archimède qui est élue députée dans le continent Guadeloupéen, la troisième circonscription, elle est élue députée de Pointe-Noire à Trois-Rivières, et on va à Marie-Galante, les gendarmes prennent les urnes, les trois urnes; ce qu'on avait raté sous Schœlcher, on le réussi en 67. Et les gendarmes dans l'avion qui qui mène de Grand-Bourg à la préfecture à Basse-Terre, les élections sont bousculées et madame Baclet, la veuve Baclet est proclamée députée au lieu et place de Gerty Archimède."
+        }
+      },      
+
+      {
+        "after": 185,
+        "anchor": 218,
+        "type": "quote",
+        "text": " Gaulliste de raison plutôt que de cœur, mais soucieux d’entrer en grâce auprès du pouvoir, il s’attelle surtout à donner au chef de l’État une majorité « incontestable » selon les instructions données par la lettre secrète de mission du ministre des DOM-TOM, le général Billotte. Les élections législatives de mars 1966 lui en fournissent l’occasion : le préfet prend littéralement en charge l’appareil UNR-UDT (Union pour la nouvelle République-Union démocratique du travail), bouscule les forces traditionnelles économiques et sociales du système, écarte certains politiciens discrédités, débauche ou en promeut d’autres, met la main aux urnes lors du second tour pour écarter la candidate communiste, Gerty Archimède, arrivée en tête au premier.",
+        "author": "Elsa Dorlin",
+        "date": "2023",
+        "source": "<em>Guadeloupe, mai 67 : massacrer et laisser mourir</em>, Libertalia.",
+        "pos": { "top": "5%", "right": "74%" },
+        "size": "25%",
+        "duration": 20
+      },
+
+      {
+        "after": 190,
+        "anchor": 226,
+        "type": "audio",
+        "src": "sétannou2.mp3",
+        "title": "<em>La Gwadloup sé tan nou</em>",
+        "caption": "Jacky Richard, 2009.",
+        "pos": { "top": "55%", "right": "3%" },
+        "size": "28%",
+        "duration": 20,
+        "transcript": {
+          "GCF": "Misyé soti la i soti, \nèvè nouvèl diktati. \nNou adan on démokwasi,\n pa menm savé sa i ka di. \n Misyé préfé réfléchi, \nréfléchi byen sa ou ka di. \nNou vini posé ou kessyon, \na vou dè ban nou bon solisyon. \n\n La Gwadloup sé tan nou, la Gwadloup sé pa ta yo \nYo pé ké fè sa yo vlé, sa yo vlé an péyi an nou. \nLa Gwadloup sé tan nou, la Gwadloup sé pa ta yo \nYo pé ké fè sa yo vlé, sa yo vlé an péyi an nou.",
+          "fr": "Ce Monsieur arrive, \navec sa nouvelle forme de dictature. \nNous sommes en  démocratie, \nil ne sait même pas ce qu'il dit. \nMonsieur le préfet, réfléchissez, \nréfléchissez bien à vos paroles. \nNous sommes venus poser des questions, \nc'est à vous d'apporter des vraies solutions. \n\nLa Guadeloupe est à nous, la Guadeloupe n’est pas à eux \nIls ne pourront pas faire ce qu’ils veulent, ce qu’ils veulent dans notre pays \nLa Guadeloupe est à nous, la Guadeloupe n’est pas à eux \nIls ne pourront pas faire ce qu’ils veulent, ce qu’ils veulent dans notre pays."
+        }
+      },
+
+      {
+        "after": 247,
+        "anchor": 286,
+        "type": "image",
+        "src": "Archives_legislatives_2.jpg",
+        "caption": "Tract de campagne de Gaston Feuillard, candidat groupement des democrates independants d'action sociale de la 3e circonscription de Guadeloupe aux élections législatives de 1967.",
+        "pos": { "bottom": "50%", "left": "3%" },
+        "size": "20%",
+        "duration": 23
+      },
+
+      {
+        "after": 249,
+        "anchor": 286,
+        "type": "image",
+        "src": "Archives_legislatives_3.jpg",
+        "caption": "Tract de campagne de Gaston Feuillard, candidat groupement des democrates independants d'action sociale de la 3e circonscription de Guadeloupe aux élections législatives de 1967.",
+        "pos": { "bottom": "50%", "left": "78%" },
+        "size": "20%",
+        "duration": 23
+      },
+
+       {
+        "after": 251,
+        "anchor": 286,
+        "type": "image",
+        "src": "Archives_legislatives_4.jpg",
+        "caption": "Remerciements de Albertine Baclet, candidate Gaulliste élue députée de la 3e circonscription de Guadeloupe aux élections législatives de 1967.",
+        "pos": { "bottom": "10%", "left": "3%" },
+        "size": "20%",
+        "duration": 23
+      },
+
+      {
+        "after": 280,
+        "anchor": 309,
+        "type": "image",
+        "src": "Archives_Journal_Election.jpg",
+        "caption": " Une du journal <em>L'étincelle</em> du 18 février 1967.",
+        "pos": { "bottom": "1%", "left": "78%" },
+        "size": "20%",
+        "duration": 10
+      },
+
+      {
+        "after": 290,
+        "anchor": 320,
+        "type": "audio",
+        "src": "sétannou3.mp3",
+        "title": "<em>La Gwadloup sé tan nou</em>",
+        "caption": "Jacky Richard, 2009.",
+        "pos": { "top": "11%", "right": "6%" },
+        "size": "28%",
+        "duration": 15,
+        "transcript": {
+          "GCF": "Nou sé pitit a Ignas, désandan a Solitid \nSé yo ki zansèt an nou, sé yo ki Gwadloupéyen\nI kriyé Gwadloup-la, yo goumé pou nou soti\nAlè nou ka pété chenn nou pa ka viré an ba chenn\n\nLa Gwadloup sé tan nou, la Gwadloup sé pa ta yo \nYo pé ké fè sa yo vlé, sa yo vlé an péyi an nou. \nLa Gwadloup sé tan nou, la Gwadloup sé pa ta yo \nYo pé ké fè sa yo vlé, sa yo vlé an péyi an nou.",
+
+          "fr": "Nous sommes les enfants d'Ignace, descendants de Solitude.\nCe sont eux nos ancêtres, ce sont eux les Guadeloupéens.\nIls ont appelé la Guadeloupe, ils se sont battus pour nous libérer.\nMaintenant que nous avons brisé nos chaînes, nous ne retournerons plus sous les chaînes.\n\nLa Guadeloupe est à nous, la Guadeloupe n’est pas à eux \nIls ne pourront pas faire ce qu’ils veulent, ce qu’ils veulent dans notre pays \nLa Guadeloupe est à nous, la Guadeloupe n’est pas à eux \nIls ne pourront pas faire ce qu’ils veulent, ce qu’ils veulent dans notre pays"
+        }
+      },
+
+      {
+        "after": 300,
+        "anchor": 329,
+        "type": "quote",
+        "text": " Et qu'il me sera doux \nô \nmaître séculaire \nd'entendre au fond des soirs  multipliés d'insectes \npleurer ton rêve occidental \ndans le coui de ma joie !",
+        "author": "Sonny Rupaire",
+        "date": "1982",
+        "source": "« Cette igname brisée qu'est ma terre natale », dans <em>Cette igname brisée qu'est ma terre natale</em>, Éditions caribéennes.",
+        "pos": { "top": "65%", "right": "74%" },
+        "size": "25%",
+        "duration": 10
+      },
+       
+       {
+        "after": 423,
+        "anchor": 459,
+        "type": "audio",
+        "src": "loizon.mp3",
+        "title": "Chatte Tété Ratte",
+        "caption": "Robert Loyson accompagné par Le Tandem Vélo-Boisbant, 1968.",
+        "pos": { "top": "20%", "right": "30%" },
+        "size": "28%",
+        "duration": 10,
+        "transcript": {
+          "GCF": "Mwen pâté savé \nChatte évé Rate a konplisité a kaz an mwen \nChatte ka tété Rate \nRate ka tété Chatte \nAnba kouch an mwen \n\nMwen pâté savé \nChatte épi Rate a konplisité a kaz an mwen \nOh, Chatte ka tété Rate \nRate la tété Chatte \nAnba kouch an mwen \n\nMwen pâté savé \nChatte épi Rate a konplisité a kaz an mwen \nOh, Chatte ka tété Rate \nRate la tété Chatte \nA case an mwen \n\nMwen pâté savé \nChatte épi Rate a konplisité a kaz an mwen",
+
+          "fr": "Je ne savais pas \nla chatte et la rate s’entendaient dans ma maison \nLa chatte tétait la rate \nLa rate tétait la chatte \nSous mon lit \n\nJe ne savais pas \nla chatte et la rate s’entendaient dans ma maison \nWoh, La chatte tétait la rate \nLa rate tétait la chatte \nSous mon lit \n\nJe ne savais pas \nla chatte et la rate s’entendaient dans ma maison \nWoh, La chatte tétait la rate \nLa rate tétait la chatte \nDans ma maison \n\nJe ne savais pas \nLa chatte et la rate s’entendaient dans ma maison"
+        }
+      },
+
+      {
+        "after": 426,
+        "anchor": 458,
+        "type": "image",
+        "src": "gong2.jpg",
+        "caption": "Affiches du Groupe d'organisation nationale de la Guadeloupe (GONG) pour contester les procès jugés abusifs intentés à leurs membres après les événements de 1967, 1968.",
+        "pos": { "bottom": "7%", "left": "3%" },
+        "size": "20%",
+        "duration": 15
+      },
+
+      {
+        "after": 429,
+        "anchor": 458,
+        "type": "image",
+        "src": "gong3.jpg",
+        "caption": "Affiches du Groupe du GONG pour contester les procès jugés abusifs intentés à leurs membres après les événements de 1967, 1968.",
+        "pos": { "bottom": "4%", "left": "78%" },
+        "size": "20%",
+        "duration": 15
+      },
+
+      {
+        "after": 420,
+        "anchor": 452,
+        "type": "quote",
+        "text": " Pierre Billotte, déplorant un taux de progression démographique de la Guadeloupe qui l’apparenterait « aux pays sous-développés de type asiatique ou africain.»",
+        "author": "Michelle Zancarini-Fournel",
+        "date": "2019",
+        "source": "« Contraception et avortement dans les Antilles françaises (Guadeloupe et Martinique, 1964-1975) », dans <em>Clio</em> 2019, n° 50, Belin.",
+        "pos": { "top": "5%", "right": "74%" },
+        "size": "25%",
+        "duration": 20
+      },
+
+      {
+        "after": 370,
+        "anchor": 404,
+        "type": "audio",
+        "src": "Akiyo.mp3",
+        "title": "<em>Nou nèg</em>",
+        "caption": "<em>Ki yo vlé ki yo vé pa Akiyo là !</em>, Akiyo, Aztec music, 2014.",
+        "pos": { "top": "10%", "right": "7%" },
+        "size": "28%",
+        "duration": 23,
+        "transcript": {
+          "GCF": "Si sé paskè nou nwè, pawòl an nou pa jan kouté, \nSi nèg sé lé ténèb, lèspri an nou sé limyè. \n\nSi sé paskè nou nwè, pawòl an nou pa jan kouté, \nSi nèg sé lé ténèb, lèspri an nou sé limyè.",
+
+          "fr": "Si c'est parce que nous sommes noirs que notre parole n'est jamais écoutée, \nsi le Noir c'est les ténèbres, notre esprit c'est la lumière. \n\nSi c'est parce que nous sommes noirs que notre parole n'est jamais écoutée, \nsi le Noir c'est les ténèbres, notre esprit c'est la lumière."
+        }
+      },
+
+      {
+        "after": 460,
+        "anchor": 493,
+        "type": "audio",
+        "src": "1967-en-Guadeloupe-2021_02-Reconciliation-Tino-Saint-Val_extrait.mp3",
+        "title": "<em>Réconciliation</em>",
+        "caption": "<em>Tino Saint Val</em>, Tino Saint-Val, Aux Ondes, 1964.",
+        "pos": { "top": "20%", "right": "4%" },
+        "size": "28%",
+        "duration": 10,
+        "transcript": {
+          "GCF": "La vie boulvèsé, wayayay \nPep-la révolté, wayayay \nTout moun ka kriyé, wayayay \nKa ki ka pasé ? \n\n Vitrin ka kasé, wayayay \nPep-la ka frapé, wayayay \nSoulyé ka rivé, wayayay \nTout moun étonné \n\nFò nou konprann, nou lé Antiyé \nAsi latè, nou tout sé frè \nKi sa ki blan, ki sa ki nwar ? \nSé la menm koulè \n\nFò nou konprann nou, nou lé Fransé \nAsi latè, nou tout sé frè \nPou sa ki blan, pou sa ki nwar \nYonn sèl simityè",
+
+          "fr": "La vie bouleversée, wayayay \nLe peuple est révolté, wayayay \nTout le monde crie, wayayay \nQue se passe-t-il ? \n\nLes vitrines sont cassées, wayayay \nLe peuple frappe, wayayay \nLes souliers arrivent, wayayay \nTout le monde est étonné \n\nIl faut comprendre, nous les Antillais \nSur la terre, nous sommes des frères \nQu’est-ce qui est blanc, qu’est-ce qui est noir ? \nC’est la même couleur \n\nIl faut nous comprendre, nous sommes Français \nSur la terre, nous sommes tous frères \nPour ceux qui sont blancs, pour ceux qui sont noirs \nUn seul cimetière"
+        }
+      },
+
+      {
+        "after": 443,
+        "anchor": 486,
+        "type": "image",
+        "src": "Basse Terre.jpg",
+        "caption": "Boulevard du Gouverneur Félix Éboué (anciennement Nouvelle Avenue) à Basse-Terre, 1948.",
+        "pos": { "bottom": "57%", "left": "3%" },
+        "size": "25%",
+        "duration": 8
+      },
+
+      {
+        "after": 445,
+        "anchor": 486,
+        "type": "image",
+        "src": "Basse Terre2.jpg",
+        "caption": "Carte postale de Basse-Terre, date inconnue.",
+        "pos": { "bottom": "57%", "left": "38%" },
+        "size": "25%",
+        "duration": 8
+      },
+
+      {
+        "after": 447,
+        "anchor": 486,
+        "type": "image",
+        "src": "Basse Terre3.jpg",
+        "caption": "Rue Maurice Marie-Claire à Basse-Terre, 1963.",
+        "pos": { "bottom": "57%", "left": "73%" },
+        "size": "25%",
+        "duration": 8
+      },
+
+      {
+        "after": 463,
+        "anchor": 493,
+        "type": "image",
+        "src": "voiture_BT.jpg",
+        "caption": "Plusieurs centaines de personnes détruisant les véhicules de Vladimir Srnsky avant de les jeter à la mer, 1967.",
+        "pos": { "bottom": "10%", "left": "76%" },
+        "size": "20%",
+        "duration": 10
+      },
+
+      {
+        "after": 465,
+        "anchor": 493,
+        "type": "image",
+        "src": "voiture_BT2.jpeg",
+        "caption": "Guy Maillard, alors sous-préfet de la Guadeloupe tentant de canaliser la foule en colère, 1967.",
+        "pos": { "bottom": "12%", "left": "3%" },
+        "size": "20%",
+        "duration": 10
+      },
+
+      {
+        "after": 475,
+        "anchor": 505,
+        "type": "image",
+        "src": "Archives_Journal_BasseTerre.png",
+        "caption": " Une du n°203 du journal <em>France-Antilles</em> du 23 mars 1967.",
+        "pos": { "bottom": "10%", "left": "4%" },
+        "size": "28%",
+        "duration": 17
+      },
+
+      {
+        "after": 470,
+        "anchor": 496,
+        "type": "audio",
+        "src": "1967-en-Guadeloupe-2021_01-Bel-chien-en-moin-Raphael-Zachille_extrait.mp3",
+        "title": "<em>Bel chien en moin</em>",
+        "caption": "<em>Bravo Raphaël !</em>, Raphaël Zachille et son orchestre, Disques Debs, 1967.",
+        "pos": { "top": "30%", "right": "10%" },
+        "size": "28%",
+        "duration": 20,
+        "transcript": {
+          "GCF": "Vini vwè sa ki rivé \nAn bèl gwo chien ki mòwdé an nonm \nAnlo moun pa’y ka babiyé \nÉ yo mété yo tout ka babiyé \n\nKout pyé, kout baton toupatou \nÉ anlo moun fé pyé a yo \nPi lafè pou an gwo chien \nKi fè tout moun lévé kon démon",
+          "fr": "Venez voir ce qui vient de se passer \nUn beau gros chien a mordu un homme \nBeaucoup de gens qui ne le connaissaient même pas s'indignaient \nEt ils se sont tous mis à protester \n\nDes coups de pied, des coups de bâton partout \nEt beaucoup de gens ont pris leurs jambes à leur cou \nTout ça à cause d'un gros chien \nQui a fait se soulever tout le monde comme des démons"
+        }
+      },
+
+      {
+        "after": 483,
+        "anchor": 508,
+        "type": "audio",
+        "src": "rodes2.mp3",
+        "title": "Témoignage de Maître Félix Rodes sur les événements de Basse-Terre en mars 1967.",
+        "caption": "<em>Sonjé Mé 67</em>, épisode 1, Danik Zandwonis, 2007.",
+        "pos": { "top": "80%", "right": "65%" },
+        "size": "28%",
+        "duration": 12,
+        "transcript": {
+          "fr": "Chez srnsky, la discipline est différente. Si pendant que vous servez une négresse ou un nègre, un blanc ou une blanche arrive, il faut abandonner le nègre et voir le blanc. Et des femmes de gendarmes étaient arrivés et les deux employés, deux vieilles employées de l'établissement qui étaient en train de servir des indigènes, ne voient pas que deux blanches sont arrivées. Et Snarsky leur dit : « Mais comment ! Vous ne voyez pas alors qui est arrivé ? » Elles disent : « Mais non, mais on est en train de servir monsieur. » « Qu'est ce que ça veut dire ? Vous ne comprenez rien ? Vous êtes renvoyées. » Des employées qui étaient là depuis 7, 8 ans, renvoyées sur le champs. Et Balzinc avait eu une autorisation de la mairie de recevoir les gens sortant du magasin de srnsky pour clouer leurs chaussures et mettre un talon en fer. srnsky avait demandé de le faire disparaître, il ne voulait pas voir ce vieux nègre infirme toujours devant son magasin, qui marchait bien, tout marchait bien. Sauf le jour où il est arrivé avec son chien loup, une bête énorme de 60 kilos, et il a détaché le chien qui était avec lui, qui était un animal très obéissant, et il lui a dit : « Va embrasser le nègre. » Et le chien a bondi, il a embrassé Balzinc terrorisé qui est tombé. On appelle la police, les policiers viennent et srnsky leur dit : « Foutez moi le camp ! » Et les gens ont vu ça et ont dit : « Vous pouvez pas faire ça, nou pa an Alabama, nou pa an Afrik di Sid, yo pé pa fè on nèg sa. » Alors, ils ont attendu, la police n'a rien fait, et ils ont dit : « Si la police part au commissariat, nou ka rentrer. » Ils sont rentrés et ils ont saccagé. Et pendant trois jours et trois nuits, la population s'est ammassé à Basse-Terre devant le magasin de srnsky, on a fait des charges de CRS, des charges de policiers, des charges de gendarmes, dès que la charge était finie, les gens revenaient. C'était pas les même mais c'était toujours une masse qui était là. "
+        }
+      },
+
+      {
+        "after": 500,
+        "anchor": 541,
+        "type": "video",
+        "src": "deugaulle_basseterre.mp4",
+        "caption": "Discours du général de Gaulle à Basse Terre, le 1er mai 1960.",
+        "pos": { "top": "25%", "left": "74%" },
+        "size": "30%",
+        "duration": 15
+      },
+
+      {
+        "after": 569,
+        "anchor": 607,
+        "type": "image",
+        "src": "manif2.jpg",
+        "caption": "Foule de manifestants arpentant les rues de Pointe-à-Pitre, 1967.",
+        "pos": { "bottom": "10%", "left": "76%" },
+        "size": "20%",
+        "duration": 23
+      },
+
+      {
+        "after": 569,
+        "anchor": 607,
+        "type": "image",
+        "src": "manif3.jpg",
+        "caption": "Foule de manifestants arpentant les rues de Pointe-à-Pitre, 1967.",
+        "pos": { "bottom": "58%", "left": "25%" },
+        "size": "48%",
+        "duration": 23
+      },
+
+      {
+        "after": 620,
+        "anchor": 645,
+        "type": "quote",
+        "text": " En 1958, un rapport des Renseignements généraux rappelait le sous-emploi chronique, les salaires inférieurs de 17 % à ceux de l’Hexagone pour un coût de la vie supérieur de 65 % à celui de Paris, l’habitat précaire, les conditions sanitaires désastreuses, le typhus encore menaçant et la lèpre toujours répandue. Les prestations sociales promises n’arrivaient pas et le salaire minimum restait inférieur de 18 % à celui de l’hexagone, malgré un coût de la vie plus élevé. 75 % des terres cultivables restaient entre les mains de sociétés anonymes ou de grands propriétaires.",
+        "author": "Régine Vinon",
+        "date": "29/05/2017",
+        "source": "« Mai 1967 en Guadeloupe : anniversaire d’un massacre colonial », dans <em>L’Anticapitaliste</em>, mai 2017, n° 87.",
+        "pos": { "top": "30%", "right": "4%" },
+        "size": "28%",
+        "duration": 20
+      },
+
+      {
+        "after": 660,
+        "anchor": 684,
+        "type": "audio",
+        "src": "exile_one.mp3",
+        "title": "<em>Nous travail pou ayen</em>.",
+        "caption": "<em>Fism</em>, Exile One, Barclay, 1976.",
+        "pos": { "top": "70%", "right": "4%" },
+        "size": "28%",
+        "duration": 15,
+        "transcript": {
+          "GCF": "Mwen planté kann, \nMwen planté tabak, \nSan répo. \nYo bat mwen, yo maltreté mwen. \nApré, yo di : « Arété planté kann, \nsa pa rentab, bètrav ka vann. » \nYo déklaré mwen an libèté. \nTout sa mwen bizwen, \nfò mwen achté. \nÉ pou menm mèt-la mwen ka \nkontinyé roulé. \nMé kri an mwen ka kontinyé : \n\nKa travay pou ayen, \nYo trété mwen pli mové ki on chyen. \nKa travay pou ayen.",
+          "fr": "J'ai planté la canne,\nJ'ai planté le tabac,\nSans repos.\nIls m'ont battu, ils m'ont maltraité.\nPuis ils ont dit : « Arrêtez de planter la canne,\nce n'est pas rentable, c'est la betterave qui vend. »\nIls m'ont déclaré libre.\nTout ce dont j'ai besoin,\nje dois l'acheter.\nPour le même maître,\nje continue à travailler.\nMais mon cri continue :\n\nJe travaille pour un rien,\nIls me traitent pire qu'un chien.\nJe travaille pour un rien."
+        }
+      },
+
+      {
+        "after": 725,
+        "anchor": 756,
+        "type": "quote",
+        "text": " Le secrétaire général du Syndicat des entrepreneurs, M. Brisard, aurait laissé échapper des mots malheureux, traitant les ouvriers de « sales nègres. »",
+        "author": "Ph. H.",
+        "date": "30/05/1967",
+        "source": "<em>Le Monde</em>, « UN BILAN OFFICIEL FAIT ÉTAT DE SEPT MORTS »",
+        "pos": { "top": "30%", "right": "4%" },
+        "size": "28%",
+        "duration": 20
+      },
+
+      {
+        "after": 780,
+        "anchor": 813,
+        "type": "image",
+        "src": "fond.jpg",
+        "caption": "Jacques Nestor, militant syndical et première victime connue du massacre de mai 1967.",
+        "pos": { "bottom": "4%", "left": "6%" },
+        "size": "30%",
+      "duration": 13
+      },
+
+      {
+        "after": 783,
+        "anchor": 813,
+        "type": "audio",
+        "src": "nestor.mp3",
+        "title": "Témoignage de Serge Glaude, militant syndical et politique, sur son camarade Jacques Nestor.",
+        "caption": "<em>Sonjé Mé 67</em>, épisode 3, Danik Zandwonis, 2007.",
+        "pos": { "top": "70%", "right": "4%" },
+        "size": "28%",
+        "duration": 15,
+        "transcript": {
+          "GCF": "Donk an mandé Jacques de monté Sentwòz èvè mwen. An pa vwè ka nou ka fè la. Laisser lé sendika ké adan eleman a yo, défann koz a yo pou linstan. Menmsi apré nou ka konpati, menmsi nou ka soutyenn yo, mé plas an nou pa la an pwèmyé ran èvè yo. Sa ni kon konsékans de permettre à l'adversaire, ou tout au moins à l'administration française, d'interpréter, de faire de fausses interprétations et de manipuler tout moun. \n\n Jacques refusait, i di : « Mé non Serge, an pé pa lésé zanmi an mwen. Ni zanmi ki la, an pé pa lésé zanmi an mwen la é pa montré yo par prézans an mwen kè an ka soutyenn yo. »",
+          "fr": "Donc j’ai demandé à Jacques de monter à Sainte-Rose avec moi. Je ne vois pas ce que nous faisions ici. Les syndicats sont dans leurs propre élément, ils défendent leurs propres causes pour l’instant. Même si ensuite nous compatissons avec eux, même si nous les soutenons, notre place n’est pas là, au premier rang avec eux. Cela pourrait avoir pour conséquence de permettre à l’adversaire, ou tout au moins à l’administration française, d’interpréter, de faire de fausses interprétations et de manipuler tout le monde.\n\n Jacques refusait, il disait : « Mais non Serge, je ne peux pas laisser mes amis. Il y a des amis là-bas, je ne peux pas laisser mes amis là et ne pas leur montrer, par ma présence, que je les soutiens. »"
+        }
+      },
+
+      {
+        "after": 810,
+        "anchor": 834,
+        "type": "audio",
+        "src": "lapins.mp3",
+        "title": "Serge Glaude raconte un controle de police lors des événements de mai 1967.",
+        "caption": "<em>Sonjé Mé 67</em>, épisode 3, Danik Zandwonis, 2007.",
+        "pos": { "top": "50%", "right": "15%" },
+        "size": "28%",
+        "duration": 15,
+        "transcript": {
+          "GCF": "Si té ni révolisyon, té ni kouvrefe. Or, pa ni kouvrefe, an pa tann sa. Alors, de quoi zot ka palé la ? An pa ka konprann.\n\n La police : « Ah, le couvre-feu on s’en fout, nous, nous avons ordre de tirer sur les nègres comme sur des lapins. » \n\n Ça a été clair, net, sans bavure : « on a ordre de tirer sur les nègres comme sur des lapins. »",
+          "fr": "S’il y avait eu une révolution, il y aurait eu un couvre-feu. Mais il n’y avait pas de couvre-feu à cette époque-là. Alors de quoi vous parlez ? Je n’ai pas entendu ça, je ne comprends pas.\n\n La police : « Ah, le couvre-feu on s’en fout, nous, nous avons ordre de tirer sur les nègres comme sur des lapins. » \n\n Ça a été clair, net, sans bavure : « on a ordre de tirer sur les nègres comme sur des lapins. »"
+        }
+      },
+
+      {
+        "after": 813,
+        "anchor": 834,
+        "type": "audio",
+        "src": "coco.mp3",
+        "title": "<em>Mai 67 (poz-kako)</em>.",
+        "caption": "<em>Lespri Kaskod</em>, Dominik Coco, Golet Musik, 2009.",
+        "pos": { "top": "70%", "right": "4%" },
+        "size": "28%",
+        "duration": 15,
+        "transcript": {
+          "GCF": "[Témoignae Serge Glaude]\n\nSonjé, sonjé, sonjé mè 67 \na péni an lanné apré ké mwen menm fè \nsé té esklav é mèt \nmé ki biten ki fè kon menm mò ?",
+          "fr": "[Témoignae Serge Glaude]\n\n Souviens-toi, souviens-toi, souviens-toi de mai 67 \nà peine un an après que moi-même je suis né \nd’un côté, c’était esclaves et maîtres \nmais qu’est-ce qui fait qu’on meurt comme ça ?"
+        }
+      },
+
+      {
+        "after": 825,
+        "anchor": 849,
+        "type": "quote",
+        "text": " Les registres des décès consignent huit morts dues aux émeutes : Jacques Nestor, Ary Pincemaille, Olivier Tidas, Georges Zadigue-Gougougnan et Emmanuel Craverie pour Pointe-à-Pitre, Jules Kancel, Aimé Landres, Camille Taret pour la commune voisine des Abymes. Camille Taret, jeune employé à l'hôpital, est abattu alors qu'il rentre chez lui. Aimé Landres est tué par une patrouille lors de la veillée funèbre de ce dernier. Les fils d'Emmanuel Craverie, Emmanuel et Paul Angèle, se sont fait connaître tardivement et demandent aujourd'hui réparation.",
+        "author": "Béatrice Gurrey",
+        "date": "26/05/2009",
+        "source": "<em>Le Monde</em>, « Quarante ans de silence et toujours pas de bilan authentifié ».",
+        "pos": { "top": "30%", "right": "4%" },
+        "size": "28%",
+        "duration": 20
+      },
+
+      {
+        "after": 855,
+        "anchor": 882,
+        "type": "quote",
+        "text": "« Le nombre, je ne pense pas l'avoir inventé. On a dû me faire des notes. Mais je n'ai pas le souvenir des documents sur lesquels ils s'appuyaient », dit aujourd'hui M. Lemoine, 75 ans. Guy Maillard, sous-préfet à l'époque, puis préfet de la Guadeloupe de 1978 à 1982, conteste tout chiffre supérieur à sept, mais avoue qu'il n'a « pas spécialement cherché. »",
+        "author": "Béatrice Gurrey",
+        "date": "26/05/2009",
+        "source": "<em>Le Monde</em>, « Quarante ans de silence et toujours pas de bilan authentifié ».",
+        "pos": { "top": "23%", "right": "70%" },
+        "size": "28%",
+        "duration": 20
+      },
+
+      {
+        "after": 873,
+        "anchor": 902,
+        "type": "audio",
+        "src": "manblow.mp3",
+        "title": "<em>Man-Blow</em>",
+        "caption": "<em>Pawol A Funk Ké</em>, Timalo, STUDIO VOGUE, 2008.",
+        "pos": { "top": "70%", "right": "64%" },
+        "size": "28%",
+        "duration": 15,
+        "transcript": {
+          "GCF": "An pa endépendantis, an pa nasyonalis pou otan \nson senp ouvrié batiman \nka monté parpaing si parpaing \né pitit a mwen ka mòfé \n\nAn ka konstwi tout kalité vila \nmé fanmi an mwen an larila\nAn vini la trankilman\nmandé ti-tak plis lajan\n2 poursan selman\nmwen pé plen o bol\né anvwayé gason an mwen lékol\n\nLè ou gadé mwen, blòw bop boum ba ba\nFizi si mwen an pa a konprann a ki lé, bop boum ba ba\nFizi an do an mwen an pa ka konprann a ki sa\nmé san an mwen dèwò\nrezon an mwen pasé pou tò.",
+          "fr": "Je ne suis pas indépendantiste, je ne suis pas nationaliste pour autant. \nJe suis un simple ouvrier du bâtiment \nqui monte parpaing sur parpaing \net mon enfant meurt.\n\nJe construis toutes sortes de villas\nmais ma famille est dans la rue.\nJe viens ici tranquillement,\ndemander un peu plus d’argent,\nseulement 2 %.\nJe pourrais remplir le bol\net envoyer mon fils à l’école.\n\nQuand tu me regardes, blam boum ba ba\nUne arme sur moi, je ne comprends pas à quel moment, bop boum ba ba\nUne arme dans mon dos, je ne comprends pas ce que c’est\nmais mon sang est dehors\nma raison passe pour tort."
+        }
+      },
+
+      {
+        "after": 895,
+        "anchor": 914,
+        "type": "quote",
+        "text": "Même si pour Mai 1967 on s’en tenait seulement aux huit morts connus et identifiés, il s’agit de toute façon d’un massacre au cours d’une manifestation, ordonné sciemment sur le terrain et approuvé par le gouvernement sous la présidence du général de Gaulle.",
+        "author": "Benjamin Stora",
+        "date": "30/10/2016",
+        "source": "Rapport de la commission d’information et de recherche historique sur les événements de décembre 1959 en Martinique, de juin 1962 en Guadeloupe et en Guyane, et de mai 1967 en Guadeloupe.",
+        "pos": { "top": "23%", "right": "70%" },
+        "size": "28%",
+        "duration": 20
+      },
+
+      {
+        "after": 905,
+        "anchor": 934,
+        "type": "image",
+        "src": "loi.jpeg",
+        "caption": "Loi n° 46-451 du 19 mars 1946 tendant au classement comme département français de la Guadeloupe, de la Martinique, de la Réunion et de la Guyane française.",
+        "pos": { "bottom": "4%", "left": "76%" },
+        "size": "20%",
+      "duration": 13
+      },
+
+      {
+        "after": 1000,
+        "anchor": 1028,
+        "type": "quote",
+        "text": "En effet, dès qu'il s'est avéré à la fin de la matinée que M. Canales, qui s'était pourtant présenté au début du procès à l'appel des témoins, était défaillant et sans excuses, le président Briand, épousant les conclusions du ministère public et appliquant les dispositions de l'article 439 du code de procédure pénal, a requis que le policier soit conduit devant le tribunal par la « force publique. » \n\nMais ce n'était là encore qu'une des péripéties de la journée. A la reprise de l'après-midi, non seulement M. Canales demeurait introuvable, mais les magistrats devaient faire face à une nouvelle difficulté : il n'y avait pas de prévenus dans le box. On ne tardait pas à en apprendre la raison. La sûreté nationale, par solidarité avec le commissaire qui avait eu à réprimer les grèves de 1967, s'était... mise en grève.",
+        "author": "Michel Legris",
+        "date": "05/04/1968",
+        "source": "<em>Le Monde</em>, « Atmosphère houleuse à l'ouverture du procès des vingt-cinq Guadeloupéens impliqués dans les émeutes de l'an dernier ».",
+        "pos": { "top": "23%", "right": "70%" },
+        "size": "28%",
+        "duration": 20
+      },
+
+      {
+        "after": 1120,
+        "anchor": 1155,
+        "type": "quote",
+        "text": "Dis-leur que les marées \nOuvrent la serrure de nos mémoires \nQue parfois le passé souffle \nPour attiser nos flammes \nCar un peuple qui oublie \nNe connaît plus la couleur des jours \nIl va comme un aveugle dans la nuit du présent",
+        "author": "Ernest Pépin",
+        "date": "1997",
+        "source": "« Dis-leur », dans <em>Babil du songer</em>, Ibis Rouge.",
+        "pos": { "top": "23%", "right": "70%" },
+        "size": "28%",
+        "duration": 20
+      }  
+
+    ]
+  }
+  </script>
+
+  <script src="script_static.js"></script>
+
+  <!-- ── Script intro : phrase mot par mot → fondu → audio créole ── -->
+  <script>
+    (function() {
+      const introScreen = document.getElementById('intro-screen');
+      const mainContent  = document.getElementById('main-content');
+      const step1        = document.getElementById('intro-step1');
+      const step2        = document.getElementById('intro-step2');
+      const sentenceEl   = document.getElementById('intro-sentence');
+      const arrowBtn     = document.getElementById('intro-arrow-btn');
+      const creoleEl     = document.getElementById('intro-creole');
+      const progressWrap = document.getElementById('intro-audio-progress-wrap');
+      const progressFill = document.getElementById('intro-audio-progress-fill');
+      const skipBtn       = document.getElementById('intro-skip-btn');
+
+      // ↓ Remplacez par le nom de votre fichier audio
+      const audio = new Audio('franceinter_emeutes.mp3');
+      let rafId = null;
+
+      // ── Bypass intro si ?skip ou ?edit dans l'URL ──
+      // (le mode édition a besoin que #main-content soit visible pour
+      // pouvoir positionner/redimensionner les médias)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('skip') || urlParams.has('edit')) {
+        introScreen.style.display = 'none';
+        mainContent.style.display = 'block';
+        mainContent.style.opacity = '1';
+        return;
+      }
+
+      // ── Étape 1 : révélation de la phrase mot par mot ──────────────
+      const sentenceParts = [
+        "Le 26 mai 1967 à Pointe-à-Pitre, un CRS reçoit un projectile dans le visage.",
+        "Les policiers décident d’ouvrir le feu sur la foule de manifestants."
+      ];
+      const wordEls = [];
+
+      sentenceParts.forEach((part, partIdx) => {
+        part.split(' ').forEach(text => {
+          const span = document.createElement('span');
+          span.className = 'intro-word';
+          span.textContent = text;
+          if (text.replace(/[.,]/g, '') === '1967') span.classList.add('intro-word-1967');
+          sentenceEl.appendChild(span);
+          sentenceEl.appendChild(document.createTextNode(' '));
+          wordEls.push(span);
+        });
+        if (partIdx < sentenceParts.length - 1) {
+          sentenceEl.appendChild(document.createElement('br'));
+        }
+      });
+
+      let i = 0;
+      function revealNext() {
+        if (i < wordEls.length) {
+          wordEls[i].classList.add('shown');
+          i++;
+          setTimeout(revealNext, 130);
+        } else {
+          setTimeout(() => arrowBtn.classList.add('shown'), 500);
+        }
+      }
+      setTimeout(revealNext, 500);
+
+      // ── Clic sur la flèche : le texte disparaît, puis "1967" seul ──
+      // Durées lues directement depuis les variables CSS en haut du <style>
+      // (rien à toucher ici si on modifie juste les valeurs CSS)
+      function readMs(varName, fallback) {
+        const raw = getComputedStyle(introScreen).getPropertyValue(varName).trim();
+        if (!raw) return fallback;
+        return raw.endsWith('ms') ? parseFloat(raw) : parseFloat(raw) * 1000;
+      }
+      const fadeWordMs  = readMs('--intro-fade-word-duration', 600);
+      const pause1967Ms = readMs('--intro-1967-pause', 350);
+      const fade1967Ms  = readMs('--intro-fade-1967-duration', 800);
+
+      const word1967  = wordEls.find(el => el.classList.contains('intro-word-1967'));
+      const otherWords = wordEls.filter(el => el !== word1967);
+
+      arrowBtn.addEventListener('click', () => {
+        arrowBtn.classList.remove('shown');
+
+        // 1. Tout le texte disparaît, sauf "1967"
+        otherWords.forEach(el => el.classList.remove('shown'));
+
+        // 2. Après une petite pause, "1967" disparaît seul
+        setTimeout(() => {
+          if (word1967) {
+            word1967.classList.add('fade-1967');
+            word1967.classList.remove('shown');
+          }
+
+          // 3. Une fois "1967" disparu à son tour, on passe à l'audio
+          setTimeout(() => {
+            step1.style.display = 'none';
+            step2.style.display = 'flex';
+            requestAnimationFrame(() => {
+              creoleEl.classList.add('shown');
+              progressWrap.classList.add('shown');
+            });
+            audio.play().catch(() => {});
+            rafId = requestAnimationFrame(tick);
+          }, fade1967Ms + 150);
+
+        }, fadeWordMs + pause1967Ms);
+      });
+
+      function tick() {
+        if (audio.duration) progressFill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+        rafId = requestAnimationFrame(tick);
+      }
+
+      // ── Fin de l'audio créole : on révèle la page principale ──────
+      function showMain() {
+        cancelAnimationFrame(rafId);
+        introScreen.style.transition = 'opacity 0.8s ease';
+        introScreen.style.opacity = '0';
+        setTimeout(() => {
+          introScreen.style.display = 'none';
+          mainContent.style.display = 'block';
+          // petit délai pour que le display:block soit peint avant le fondu
+          requestAnimationFrame(() => {
+            mainContent.style.opacity = '1';
+          });
+        }, 800);
+        audio.pause();
+      }
+
+      audio.addEventListener('ended', showMain);
+      skipBtn.addEventListener('click', () => {
+        audio.pause();
+        showMain();
+      });
+    })();
+  </script>
+</body>
+</html>

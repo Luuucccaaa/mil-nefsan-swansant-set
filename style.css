@@ -1,0 +1,519 @@
+@font-face {
+  font-family: 'Manif';
+  src: url('Aurora.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Legende';
+  src: url('Marianne-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Legende';
+  src: url('Marianne-RegularItalic.otf') format('opentype');
+  font-weight: normal;
+  font-style: italic;
+}
+
+:root {
+  --rouge: rgb(255, 255, 255);
+  --vert:  rgb(111, 23, 23);
+  --vertfluo:  rgb(43, 255, 0);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  overflow-x: hidden;
+}
+
+/*html, body {
+  background: var(--rouge);
+  cursor: url('curseur-custom.svg') 4 4, auto;
+}
+
+.media-overlay,
+.audio-player,
+.vid-play-btn,
+a, button {
+  cursor: url('curseur-custom.svg') 4 4, pointer;
+}*/
+
+/* ── Barre de progression ── */
+#progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 0%;
+  height: 5px;
+  background: var(--vertfluo);
+  z-index: 200;
+  transition: width 0.1s linear;
+}
+
+/* ── Zone sticky plein écran ── */
+#stage {
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--rouge);
+}
+
+/* ── Texte ── */
+#text-layer {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  max-width: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-start;
+  align-content: flex-start;
+  flex-wrap: wrap;
+  column-gap: 0.3em;
+  row-gap: 0;
+  font-size: clamp(2rem, 5.5vw, 12rem);
+  word-spacing: -0.5em;
+}
+
+.word {
+  font-family: 'Manif', serif;
+  font-size: inherit;
+  color: var(--vert);
+  line-height: 0.68;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  margin-right: -0.2em;
+}
+.word.shown { opacity: 1; }
+
+/* ── Mot en contour (texte creux) ── */
+.word.outline {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--vert);
+}
+
+.para-break {
+  width: 100%;
+  height: 0.6em;
+  pointer-events: none;
+}
+
+.line-break {
+  width: 100%;
+  height: 0;
+  font-size: 0;
+  line-height: 0;
+  pointer-events: none;
+}
+
+/* ── Médias ── */
+#media-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.media-overlay {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  /* Pour que la poignée se positionne en coin bas-droit du média */
+  overflow: visible;
+}
+.media-overlay.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ── Mode édition (touche "E" ou ?edit dans l'URL) ──────────────────────
+   Force TOUS les blocs à être visibles et déplaçables, même hors de leur
+   fenêtre d'activation liée au scroll. Permet de régler chaque position
+   une bonne fois pour toutes, puis de recopier les valeurs loguées dans
+   la console dans le JSON (champs "pos" / "size"). */
+.media-overlay.force-active {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+body.edit-mode .media-overlay {
+  outline: 1px dashed var(--vertfluo);
+}
+
+.overlay-img,
+.overlay-video {
+  width: 100%;
+  height: auto;
+  display: block;
+  min-height: 0;
+}
+.overlay-img[src=""],
+.overlay-img:not([src]) {
+  display: none;
+}
+
+.media-caption {
+  font-family: 'Legende', serif;
+  font-size: 0.6vw;
+  font-weight: bold;
+  color: var(--vert);
+  opacity: 1;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+  display: block;
+}
+
+/* ── Lecteur audio ── */
+.audio-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--vert);
+  padding: 12px 16px;
+  cursor: pointer;
+  width: 100%;
+}
+.audio-player:hover { opacity: 0.85; }
+
+.audio-icon {
+  font-size: 1rem;
+  color: var(--rouge);
+  min-width: 16px;
+  text-align: center;
+}
+.audio-info { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.audio-title { font-family: 'Legende', sans-serif; font-size: 0.7vw; color: var(--rouge); }
+.audio-bar-bg { width: 100%; height: 3px; background: rgba(255,0,0,0.25); border-radius: 2px; overflow: hidden; }
+.audio-bar-fill { height: 100%; width: 0%; background: var(--rouge); border-radius: 2px; }
+
+/* ── Spacer invisible ── */
+#spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+/* ── Version statique (body.static) ── */
+body.static #stage {
+  position: relative;
+  height: auto;
+  overflow: visible;
+  padding: 60px 0 120px;
+}
+
+body.static #text-layer {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  margin: 0 auto;
+}
+
+body.static .word {
+  opacity: 1;
+}
+
+body.static #media-layer {
+  position: fixed;
+}
+.vid-play-btn {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px; height: 56px;
+  color: var(--rouge);
+  font-size: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.vid-play-btn:hover { opacity: 0.8; }
+
+*{
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .start-screen {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .play-button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .triangle {
+      width: 0;
+      height: 0;
+      border-left: 70px solid white;
+      border-top: 45px solid transparent;
+      border-bottom: 45px solid transparent;
+      transition: 0.3s;
+    }
+
+    .play-button:hover .triangle {
+      transform: scale(1.08);
+    }
+
+    .content {
+      display: none;
+      width: 100%;
+    }
+
+    .main-image {
+      width: 100%;
+      display: block;
+    }
+
+
+
+.text-box {
+  font-family: 'Manif', serif;
+  color: var(--vertfluo);
+  width: 55%;
+  max-width: 900px;
+
+  margin: 60px auto 300px auto;
+
+  text-align: center;
+
+  font-size: clamp(2rem, 5.5vw, 12rem);
+  line-height: 0.7;
+
+  padding: 0 40px;
+}
+
+    .icons-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 120px;
+  flex-wrap: wrap;
+  padding-bottom: 300px;
+}
+
+    .icon-card {
+      text-decoration: none;
+      color: white;
+      text-align: center;
+      width: 220px;
+    }
+
+    .icon-card img {
+      width: 100%;
+      object-fit: contain;
+      margin-bottom: 20px;
+      transition: 0.3s;
+    }
+
+    .icon-card:hover img {
+      transform: scale(1.08);
+    }
+
+    .icon-text {
+      font-size: clamp(2rem, 4vw, 12rem);
+      font-family: 'Manif', serif;
+      color: var(--vertfluo);
+      line-height: 1.4;
+    }
+
+    .content {
+  display: none;
+  width: 100%;
+}
+
+.main-image {
+  width: 100%;
+  display: block;
+
+  opacity: 0;
+  animation: fadeIn 2s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+    .audio-progress-wrap {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.25);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .audio-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: white;
+      transition: width 0.3s linear;
+    }
+
+.btn-retour {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 999;
+  font-family: 'Manif', serif;
+  font-size: 1.1rem;
+  color: var(--vert, rgb(0, 255, 38));
+  background: transparent;
+  border: 1.5px solid var(--vert, rgb(0, 255, 38));
+  padding: 8px 16px;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: background 0.2s, color 0.2s;
+  pointer-events: auto;
+}
+ 
+.btn-retour:hover {
+  background: var(--vert, rgb(0, 255, 38));
+  color: var(--rouge, rgb(255, 0, 0));
+}
+/* ── Transcription audio ── */
+.audio-transcript {
+  background: var(--vert);
+  padding: 10px 16px 12px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  pointer-events: auto;
+}
+
+.transcript-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.transcript-tab {
+  font-family: 'Legende', sans-serif;
+  font-size: clamp(0.5rem, 0.65vw, 0.75rem);
+  color: rgba(255,255,255,0.5);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 2px 8px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.2s;
+}
+
+.transcript-tab.active {
+  color: var(--rouge);
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.6);
+}
+
+.transcript-text {
+  font-family: 'Legende', sans-serif;
+  font-size: clamp(0.5rem, 0.65vw, 0.75rem);
+  color: rgba(255,255,255,0.85);
+  line-height: 1.5;
+}
+
+.transcript-toggle {
+  font-family: 'Legende', sans-serif;
+  font-size: clamp(0.5rem, 0.65vw, 0.75rem);
+  color: rgba(255,255,255,0.6);
+  background: transparent;
+  border: none;
+  padding: 6px 0 4px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  width: 100%;
+  text-align: left;
+  display: block;
+}
+.transcript-toggle:hover { color: white; }
+
+.transcript-body {
+  padding-top: 4px;
+}
+
+/* ── Citation ── */
+.quote-block {
+  background: var(--vert);
+  padding: 18px 20px 14px;
+  border-left: 3px solid var(--vertfluo);
+  pointer-events: auto;
+}
+
+.quote-text {
+  font-family: 'Legende', serif;
+  font-size: clamp(0.6rem, 0.7vw, 1rem);
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.6;
+  margin: 0 0 10px 0;
+}
+
+
+
+.quote-author {
+  font-family: 'Legende', sans-serif;
+  font-size: clamp(0.5rem, 0.55vw, 0.75rem);
+  color: var(--vertfluo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.quote-date {
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: none;
+}
+
+.quote-source {
+  font-family: 'Legende', sans-serif;
+  font-size: clamp(0.45rem, 0.5vw, 0.7rem);
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 5px;
+}
+
+/* ── Poignée de redimensionnement ── */
+.resize-handle {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--vertfluo);
+  border-radius: 50%;
+  opacity: 0;
+  cursor: se-resize;
+  pointer-events: auto;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+}
+
+.media-overlay:hover .resize-handle,
+.media-overlay.active .resize-handle {
+  opacity: 0.7;
+}
+
+.resize-handle:hover {
+  opacity: 1 !important;
+}

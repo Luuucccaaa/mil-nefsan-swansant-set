@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ressources</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg" href="favicon.svg"/>
+  <style>
+    @font-face {
+      font-family: 'Manif';
+      src: url('Aurora.otf') format('opentype');
+    }
+
+    @font-face {
+  font-family: 'Legende';
+  src: url('Marianne-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+    :root {
+      --rouge: rgb(255, 255, 255);
+      --vert:  rgb(111, 23, 23);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--rouge);
+      color: var(--vert);
+      font-family: 'Manif', serif;
+      padding: 60px 40px 120px;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 6vw, 5rem);
+      line-height: 1;
+      margin-bottom: 80px;
+      letter-spacing: -0.02em;
+      font-weight: normal;
+    }
+
+    a {
+      color: var(--vert);
+      font-family: 'legende', serif;
+      text-decoration: none;
+      font-size: clamp(1rem, 0.1vw, 3rem);
+    }
+
+    /* Sur fond sombre (cartes audio), le lien doit être clair */
+    .card-audio .audio-link {
+      color: var(--rouge);
+      display: inline-block;
+      margin-top: 14px;
+    }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 80px;
+    }
+
+    .section-title {
+      font-size: clamp(0.8rem, 2vw, 1.1rem);
+      letter-spacing: 0.2em;
+      border-bottom: 1px solid var(--vert);
+      padding-bottom: 8px;
+      margin-bottom: 32px;
+    }
+
+    /* ── Grille ── */
+    .grid {
+      display: grid;
+      gap: 24px;
+    }
+    .grid-images { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    .grid-videos { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+    .grid-audios { grid-template-columns: repeat(3, 1fr); }
+    .grid-textes { grid-template-columns: 1fr; max-width: none; }
+
+    @media (max-width: 900px) {
+      .grid-audios { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .grid-audios { grid-template-columns: 1fr; }
+    }
+
+    /* ── Carte image ── */
+    .card-image img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+      filter: grayscale(0.2);
+      transition: filter 0.3s;
+    }
+    .card-image img:hover { filter: none; }
+    .card-caption {
+      font-family: 'Legende', serif;      font-size: 0.65rem;
+      letter-spacing: 0.05em;
+      margin-top: 6px;
+    }
+
+    /* ── Carte vidéo ── */
+    .card-video video {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #000;
+    }
+    .card-video .vid-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .btn-play {
+      background: var(--vert);
+      color: var(--rouge);
+      border: none;
+      width: 32px; height: 32px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-video .video-link {
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    /* ── Carte audio ── */
+    .card-audio {
+      background: var(--vert);
+      padding: 16px;
+    }
+    .card-audio .audio-title {
+      font-size: 0.75rem;
+      color: var(--rouge);
+      margin-bottom: 12px;
+      letter-spacing: 0.03em;
+    }
+    .card-audio .audio-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-audio .btn-play {
+      background: var(--rouge);
+      color: var(--vert);
+    }
+    .audio-track {
+      flex: 1;
+      height: 3px;
+      background: rgba(255,0,0,0.25);
+      border-radius: 2px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .audio-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--rouge);
+      border-radius: 2px;
+      transition: width 0.1s linear;
+    }
+    .audio-time {
+      font-size: 0.6rem;
+      color: var(--rouge);
+      opacity: 0.7;
+      white-space: nowrap;
+    }
+
+    /* ── Carte texte ── */
+    .card-texte {
+      border-left: 2px solid var(--vert);
+      padding-left: 20px;
+    }
+    .card-texte .texte-title {
+      font-family: 'Legende', serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .card-texte .texte-body {
+      font-size: clamp(1rem, 2vw, 1.4rem);
+      line-height: 1.3;
+      font-family: 'Legende', serif;
+    }
+
+    /* ── Lightbox ── */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    #lightbox.open { display: flex; }
+
+    #lightbox-inner {
+      position: relative;
+      width: 80vw;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #lightbox-close {
+      position: absolute;
+      top: -36px;
+      right: 0;
+      background: transparent;
+      border: none;
+      color: var(--vert);
+      font-size: 1.4rem;
+      cursor: pointer;
+      font-family: 'Manif', serif;
+      letter-spacing: 0.05em;
+    }
+    #lightbox-close:hover { opacity: 0.7; }
+
+    #lightbox-media {
+      width: 100%;
+      max-height: 75vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #lightbox-media img,
+    #lightbox-media video {
+      max-width: 100%;
+      max-height: 75vh;
+      object-fit: contain;
+      display: block;
+    }
+    #lightbox-media .card-audio {
+      width: 100%;
+    }
+    #lightbox-caption {
+      margin-top: 14px;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      opacity: 0.6;
+      color: var(--vert);
+    }
+
+    /* Curseur pointer sur les cards cliquables */
+    .card-image, .card-video, .card-audio-wrap { cursor: pointer; }
+
+    /* ── Bouton retour ── */
+    .btn-retour {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 999;
+      font-family: 'Manif', serif;
+      font-size: 2rem;
+      color: var(--vert);
+      background: transparent;
+      border: 1.5px solid var(--vert);
+      background: var(--rouge);
+      padding: 6px 14px;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+      letter-spacing: 0.05em;
+    }
+    .btn-retour:hover {
+      background: var(--vert);
+      color: var(--rouge);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>RESSOURCES</h1>
+
+  <!-- ═══ IMAGES ═══ -->
+  <section class="section">
+    <div class="section-title">IMAGES</div>
+    <div class="grid grid-images" id="grid-images">
+
+      <div class="card-image">
+        <img src="Archives_PointeaPitre_66.png" alt="Pointe-à-Pitre, 1966"/>
+        <div class="card-caption">Une ruelle entre les cases de la ville (Pointe-à-Pitre 1966).</div>
+      </div>
+
+      <div class="card-image">
+        <img src="cyclone.png" alt="Pointe-à-Pitre, 1966"/>
+        <div class="card-caption">Pointe-à-Pitre après le passage de l'ouragan Inez, 1966.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Archives_Journal_Cyclone_2.jpg" alt="France-Antilles, 1966"/>
+        <div class="card-caption">Journal France-Antilles du 30 septembre 1966, relatant les dégâts causés par l'ouragan. On y lit : « Inez a proprement assommé et dépouillé la Guadeloupe. Elle s'est acharnée sur notre île pendant plus de quatre heures avec une cruauté diabolique. »</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Cyclone3.png" alt="France-Antilles, 1966"/>
+        <div class="card-caption">Une du journal France-Antilles du 30 septembre 1966.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="cyclone inez_0.png" alt="Ouragan Inez, 1966"/>
+        <div class="card-caption">29 septembre 1966, Pointe-à-Pitre, Guadeloupe. Une maison gît, renversée à un angle improbable, après le passage de l'ouragan Inez, qui a ravagé l'île. Au moins 23 personnes ont trouvé la mort et 10 000 habitants se sont retrouvés sans abri.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="cyclone2.png" alt="France-Antilles, 1966"/>
+        <div class="card-caption">Journal France-Antilles du 30 septembre 1966, relatant les dégâts causés par l'ouragan.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="PAP.jpg" alt="Pointe-à-Pitre après l'ouragan"/>
+        <div class="card-caption">Vue aérienne de Pointe-à-Pitre après le passage de l'ouragan.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="pointe-à-pitre_cyclone-INES-1966-revue-paralleles.jpg" alt="Pointe-à-Pitre inondée, 1966"/>
+        <div class="card-caption">Une rue de Pointe-à-Pitre inondée après le passage de l'ouragan Inez, 1966.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="place_victoire.jpg" alt="Place de la Victoire, 1966"/>
+        <div class="card-caption">Place de la Victoire à Pointe-à-Pitre après le passage de l'ouragan Inez, 1966.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Archives_legislatives.jpg" alt="Élections législatives 1967"/>
+        <div class="card-caption">Résultats des élections législatives de 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Archives_legislatives_2.jpg" alt="Tract Gaston Feuillard"/>
+        <div class="card-caption">Tract de campagne de Gaston Feuillard, candidat du groupement des démocrates indépendants d'action sociale de la 3e circonscription de Guadeloupe aux élections législatives de 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Archives_legislatives_3.jpg" alt="Tract Gaston Feuillard"/>
+        <div class="card-caption">Tract de campagne de Gaston Feuillard, candidat du groupement des démocrates indépendants d'action sociale de la 3e circonscription de Guadeloupe aux élections législatives de 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Archives_legislatives_4.jpg" alt="Remerciements Albertine Baclet"/>
+        <div class="card-caption">Remerciements de Albertine Baclet, candidate Gaulliste élue députée de la 3e circonscription de Guadeloupe aux élections législatives de 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Archives_Journal_Election.jpg" alt="L'étincelle, 1967"/>
+        <div class="card-caption">Une du journal L'étincelle du 18 février 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="gong2.jpg" alt="Affiches du GONG"/>
+        <div class="card-caption">Affiches du Groupe d'organisation nationale de la Guadeloupe (GONG) pour contester les procès jugés abusifs intentés à leurs membres après les événements de 1967, 1968.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="gong3.jpg" alt="Affiches du GONG"/>
+        <div class="card-caption">Affiches du Groupe du GONG pour contester les procès jugés abusifs intentés à leurs membres après les événements de 1967, 1968.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Basse Terre.jpg" alt="Basse-Terre, 1948"/>
+        <div class="card-caption">Boulevard du Gouverneur Félix Éboué (anciennement Nouvelle Avenue) à Basse-Terre, 1948.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Basse Terre2.jpg" alt="Basse-Terre"/>
+        <div class="card-caption">Carte postale de Basse-Terre, date inconnue.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Basse Terre3.jpg" alt="Basse-Terre, 1963"/>
+        <div class="card-caption">Rue Maurice Marie-Claire à Basse-Terre, 1963.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="voiture_BT.jpg" alt="Émeutes de Basse-Terre, 1967"/>
+        <div class="card-caption">Plusieurs centaines de personnes détruisant les véhicules de Vladimir Srnsky avant de les jeter à la mer, 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="voiture_BT2.jpeg" alt="Guy Maillard, 1967"/>
+        <div class="card-caption">Guy Maillard, alors sous-préfet de la Guadeloupe, tentant de canaliser la foule en colère, 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="Archives_Journal_BasseTerre.png" alt="France-Antilles, mars 1967"/>
+        <div class="card-caption">Une du n°203 du journal France-Antilles du 23 mars 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="manif2.jpg" alt="Manifestants à Pointe-à-Pitre, 1967"/>
+        <div class="card-caption">Foule de manifestants arpentant les rues de Pointe-à-Pitre, 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="manif3.jpg" alt="Manifestants à Pointe-à-Pitre, 1967"/>
+        <div class="card-caption">Foule de manifestants arpentant les rues de Pointe-à-Pitre, 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="fond.jpg" alt="Jacques Nestor"/>
+        <div class="card-caption">Jacques Nestor, militant syndical et première victime connue du massacre de mai 1967.</div>
+      </div>
+
+      <div class="card-image">
+        <img src="loi.jpeg" alt="Loi du 19 mars 1946"/>
+        <div class="card-caption">Loi n° 46-451 du 19 mars 1946 tendant au classement comme département français de la Guadeloupe, de la Martinique, de la Réunion et de la Guyane française.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ VIDÉOS ═══ -->
+  <section class="section">
+    <div class="section-title">VIDÉOS</div>
+    <div class="grid grid-videos" id="grid-videos">
+
+      <div class="card-video">
+        <video src="deugaulle_basseterre.mp4" playsinline preload="metadata"></video>
+        <div class="vid-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <span class="card-caption">Discours du Président de la République Charles de Gaulle à Basse-Terre, le 1er mai 1960.</span>
+        </div>
+        <a class="audio-link video-link" href="#" target="_blank">regarder en entier →</a>
+      </div>
+
+      <div class="card-video">
+        <video src="video_carnaval.mp4" playsinline preload="metadata"></video>
+        <div class="vid-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <span class="card-caption">Carnaval de Pointe-à-Pitre, 1962.</span>
+        </div>
+        <a class="audio-link video-link" href="#" target="_blank">regarder en entier →</a>
+      </div>
+
+      <!-- Ajoute tes vidéos ici en dupliquant le bloc .card-video -->
+
+    </div>
+  </section>
+
+  <!-- ═══ AUDIOS ═══ -->
+  <section class="section">
+    <div class="section-title">AUDIOS</div>
+    <div class="grid grid-audios" id="grid-audios">
+
+      <div class="card-audio" data-src="franceinter_cyclone.mp3">
+        <div class="audio-title">Inter actualités de 20H00 du 29 septembre 1966 — France Inter</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+        <a class="audio-link" href="https://www.ina.fr/ina-eclaire-actu/audio/phf06019136/inter-actualites-de-20h00-du-29-septembre-1966" target="_blank">écouter en entier →</a>
+      </div>
+
+      <div class="card-audio" data-src="sé_tan_nou.mp3">
+        <div class="audio-title"><em>Gwadloup sé tan nou</em> — Jacky Richard, 2009</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+        <a class="audio-link" href="https://www.youtube.com/watch?v=rdH7LbjiEZE" target="_blank">écouter en entier →</a>
+      </div>
+
+      <div class="card-audio" data-src="1967-en-Guadeloupe-2021_02-Reconciliation-Tino-Saint-Val_extrait.mp3">
+        <div class="audio-title"><em>Réconciliation</em> — Tino Saint-Val, Le désir d'un orphelin, 1964</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+        <a class="audio-link" href="https://www.youtube.com/watch?v=CUkV_onNLqY" target="_blank">écouter en entier →</a>
+      </div>
+
+      <div class="card-audio" data-src="1967-en-Guadeloupe-2021_01-Bel-chien-en-moin-Raphael-Zachille_extrait.mp3">
+        <div class="audio-title"></em>Bel chien en moin</em> — Raphaël Zachille et son orchestre, 1967</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+        <a class="audio-link" href="https://www.youtube.com/watch?v=13qJ9JE5xzg" target="_blank">écouter en entier →</a>
+      </div>
+
+      <div class="card-audio" data-src="nestor.mp3">
+        <div class="audio-title">Témoignage de Serge Glaude sur Jacques Nestor — Sonjé Mé 67, 2009</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+        <a class="audio-link" href="https://www.youtube.com/watch?v=qsuGLu_8rEo" target="_blank">écouter en entier →</a>
+      </div>
+
+      <div class="card-audio" data-src="lapins.mp3">
+        <div class="audio-title">Serge Glaude raconte un contrôle de police — Sonjé Mé 67, 2009</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+        <a class="audio-link" href="https://www.youtube.com/watch?v=qsuGLu_8rEo" target="_blank">écouter en entier →</a>
+      </div>
+
+      <div class="card-audio" data-src="coco.mp3">
+        <div class="audio-title"><em>Mai 67 (poz-kako)</em> — Dominik Coco, Golet Musik, 2009</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+        <a class="audio-link" href="https://www.youtube.com/watch?v=pPpoXsJaSjM" target="_blank">écouter en entier →</a>
+      </div>
+
+      <div class="card-audio" data-src="gwadloup_malad.mp3">
+        <div class="audio-title"><em>Gwadloup malad</em> — Guy Konkèt, Aux Ondes, 1967</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+      </div>
+
+      <div class="card-audio" data-src="rodes1.mp3">
+        <div class="audio-title">Témoignage de Maître Félix Rodes sur les élections législatives de 1967 — Sonjé Mé 67, épisode 1, 2007</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+      </div>
+
+      <div class="card-audio" data-src="sétannou2.mp3">
+        <div class="audio-title"><em>La Gwadloup sé tan nou</em> — Jacky Richard, 2009</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+      </div>
+
+      <div class="card-audio" data-src="sétannou3.mp3">
+        <div class="audio-title"></em>La Gwadloup sé tan nou</em> — Jacky Richard, 2009</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+      </div>
+
+      <div class="card-audio" data-src="loizon.mp3">
+        <div class="audio-title"><em>Chatte Tété Ratte</em> — Robert Loyson accompagné par Le Tandem Vélo-Boisbant, 1968</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+      </div>
+
+      <div class="card-audio" data-src="Akiyo.mp3">
+        <div class="audio-title"><em>Nou nèg</em> — Ki yo vlé ki yo vé pa Akiyo là !, Akiyo, Aztec music, 2014</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+      </div>
+
+      <div class="card-audio" data-src="rodes2.mp3">
+        <div class="audio-title">Témoignage de Maître Félix Rodes sur les événements de Basse-Terre en mars 1967 — Sonjé Mé 67, épisode 1, 2007</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+      </div>
+
+      <div class="card-audio" data-src="exile_one.mp3">
+        <div class="audio-title"><em>Nous travail pou ayen</em> — Fism, Exile One, Barclay, 1976</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+      </div>
+
+      <div class="card-audio" data-src="manblow.mp3">
+        <div class="audio-title"><em>Man-Blow</em> — Pawol A Funk Ké, Timalo, STUDIO VOGUE, 2008</div>
+        <div class="audio-controls">
+          <button class="btn-play" data-state="paused">▶</button>
+          <div class="audio-track"><div class="audio-fill"></div></div>
+          <span class="audio-time">0:00</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ TEXTES ═══ -->
+  <section class="section">
+    <div class="section-title">CITATIONS</div>
+    <div class="grid grid-textes">
+
+      <div class="card-texte">
+        <div class="texte-title">CITATION — LE MONDE, 30/05/1967</div>
+        <div class="texte-body">
+          « Le secrétaire général du Syndicat des entrepreneurs, M. Brisard, aurait laissé échapper des mots malheureux, traitant les ouvriers de "sales nègres." »
+        </div>
+        <a class="audio-link" style="color:brown;" href="https://www.lemonde.fr/archives/article/1967/05/30/un-bilan-officiel-fait-etat-de-sept-morts_2627137_1819218.html" target="_blank">Consulter</a>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">GUY TIROLIEN — PRIÈRE D'UN PETIT ENFANT NÈGRE, 1961</div>
+        <div class="texte-body">
+          « Les nègres, vous le savez, n'ont que trop travaillé. Pourquoi faut-il de plus apprendre dans les livres qui nous parlent de choses qui ne sont point d'ici. Et puis elle est vraiment trop triste leur école. Seigneur, je ne veux plus aller à leur école. »
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">FRANCIS SANSEIGNE, GENÈSES, 2020</div>
+        <div class="texte-body">
+          Pierre Bolotte veilla au financement de l'association par le FASSO à partir de 1966 et incita certaines communes à lui verser des subventions, n'hésitant pas à organiser lui-même l'acheminement illégal de stérilets, transposant un savoir-faire acquis dans le travail contre-insurrectionnel en Algérie.
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">ELSA DORLIN — GUADELOUPE, MAI 67 : MASSACRER ET LAISSER MOURIR, 2023</div>
+        <div class="texte-body">
+          Le préfet prend en charge l'appareil UNR-UDT, bouscule les forces traditionnelles du système, et met la main aux urnes lors du second tour des élections législatives de mars 1967 pour écarter la candidate communiste, Gerty Archimède, arrivée en tête au premier.
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">SONNY RUPAIRE — CETTE IGNAME BRISÉE QU'EST MA TERRE NATALE, 1982</div>
+        <div class="texte-body">
+          « Et qu'il me sera doux, ô maître séculaire, d'entendre au fond des soirs multipliés d'insectes pleurer ton rêve occidental dans le coui de ma joie ! »
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">MICHELLE ZANCARINI-FOURNEL — CLIO, 2019</div>
+        <div class="texte-body">
+          Pierre Billotte déplorait un taux de progression démographique de la Guadeloupe qui l'apparenterait « aux pays sous-développés de type asiatique ou africain. »
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">RÉGINE VINON — L'ANTICAPITALISTE, 29/05/2017</div>
+        <div class="texte-body">
+          En 1958, un rapport des Renseignements généraux rappelait le sous-emploi chronique, les salaires inférieurs de 17 % à ceux de l'Hexagone pour un coût de la vie supérieur de 65 % à celui de Paris, l'habitat précaire et les conditions sanitaires désastreuses. 75 % des terres cultivables restaient entre les mains de sociétés anonymes ou de grands propriétaires.
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">BÉATRICE GURREY — LE MONDE, 26/05/2009</div>
+        <div class="texte-body">
+          Les registres des décès consignent huit morts dues aux émeutes : Jacques Nestor, Ary Pincemaille, Olivier Tidas, Georges Zadigue-Gougougnan et Emmanuel Craverie pour Pointe-à-Pitre, Jules Kancel, Aimé Landres, Camille Taret pour la commune voisine des Abymes.
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">BÉATRICE GURREY — LE MONDE, 26/05/2009</div>
+        <div class="texte-body">
+          « Le nombre, je ne pense pas l'avoir inventé. On a dû me faire des notes. Mais je n'ai pas le souvenir des documents sur lesquels ils s'appuyaient », dit M. Lemoine. Guy Maillard, sous-préfet à l'époque, conteste tout chiffre supérieur à sept, mais avoue qu'il n'a « pas spécialement cherché. »
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">BENJAMIN STORA — RAPPORT DE LA COMMISSION D'INFORMATION ET DE RECHERCHE HISTORIQUE, 30/10/2016</div>
+        <div class="texte-body">
+          Même si pour mai 1967 on s'en tenait seulement aux huit morts connus et identifiés, il s'agit d'un massacre au cours d'une manifestation, ordonné sciemment sur le terrain et approuvé par le gouvernement sous la présidence du général de Gaulle.
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">MICHEL LEGRIS — LE MONDE, 05/04/1968</div>
+        <div class="texte-body">
+          La sûreté nationale, par solidarité avec le commissaire qui avait eu à réprimer les grèves de 1967, s'était mise en grève, laissant le box des prévenus vide à la reprise du procès des vingt-cinq Guadeloupéens impliqués dans les émeutes de l'année précédente.
+        </div>
+      </div>
+
+      <div class="card-texte">
+        <div class="texte-title">ERNEST PÉPIN — DIS-LEUR, BABIL DU SONGER, 1997</div>
+        <div class="texte-body">
+          « Dis-leur que les marées ouvrent la serrure de nos mémoires, que parfois le passé souffle pour attiser nos flammes. Car un peuple qui oublie ne connaît plus la couleur des jours, il va comme un aveugle dans la nuit du présent. »
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Lightbox -->
+  <div id="lightbox">
+    <div id="lightbox-inner">
+      <button id="lightbox-close">✕ fermer</button>
+      <div id="lightbox-media"></div>
+      <div id="lightbox-caption"></div>
+    </div>
+  </div>
+
+  <a href="index_static.html?skip" class="btn-retour">← retour</a>
+
+  <script>
+    // ── Players vidéo ────────────────────────────────────────────────
+    document.querySelectorAll('.card-video').forEach(card => {
+      const vid = card.querySelector('video');
+      const btn = card.querySelector('.btn-play');
+      btn.addEventListener('click', () => {
+        if (vid.paused) { vid.play(); btn.textContent = '■'; }
+        else { vid.pause(); btn.textContent = '▶'; }
+      });
+      vid.addEventListener('ended', () => { btn.textContent = '▶'; });
+    });
+
+    // ── Players audio ────────────────────────────────────────────────
+    let currentAudio = null;
+
+    document.querySelectorAll('.card-audio').forEach(card => {
+      const src  = card.dataset.src;
+      const btn  = card.querySelector('.btn-play');
+      const fill = card.querySelector('.audio-fill');
+      const time = card.querySelector('.audio-time');
+      const track = card.querySelector('.audio-track');
+
+      const audio = new Audio(src);
+      let playing = false, raf = null;
+
+      function fmt(s) {
+        const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+        return m + ':' + String(sec).padStart(2, '0');
+      }
+
+      function tick() {
+        if (audio.duration) {
+          fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+          time.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+        }
+        if (playing) raf = requestAnimationFrame(tick);
+      }
+
+      audio.addEventListener('ended', () => {
+        playing = false; btn.textContent = '▶';
+        fill.style.width = '0%'; time.textContent = '0:00';
+        cancelAnimationFrame(raf);
+      });
+
+      // Clic sur la barre pour seek
+      track.addEventListener('click', e => {
+        if (!audio.duration) return;
+        const pct = e.offsetX / track.offsetWidth;
+        audio.currentTime = pct * audio.duration;
+      });
+
+      btn.addEventListener('click', () => {
+        if (playing) {
+          audio.pause(); playing = false; btn.textContent = '▶'; cancelAnimationFrame(raf);
+        } else {
+          // Stoppe les autres
+          if (currentAudio && currentAudio !== audio) {
+            currentAudio.pause(); currentAudio.currentTime = 0;
+            document.querySelectorAll('.card-audio .btn-play').forEach(b => b.textContent = '▶');
+            document.querySelectorAll('.audio-fill').forEach(f => f.style.width = '0%');
+          }
+          audio.play().catch(() => {});
+          playing = true; btn.textContent = '■';
+          raf = requestAnimationFrame(tick);
+          currentAudio = audio;
+        }
+      });
+    });
+
+    // ── Lightbox ─────────────────────────────────────────────────────
+    const lightbox     = document.getElementById('lightbox');
+    const lbMedia      = document.getElementById('lightbox-media');
+    const lbCaption    = document.getElementById('lightbox-caption');
+    const lbClose      = document.getElementById('lightbox-close');
+    let lbAudio        = null;
+
+    function openLightbox(mediaEl, caption) {
+      lbMedia.innerHTML = '';
+      if (lbAudio) { lbAudio.pause(); lbAudio = null; }
+
+      lbMedia.appendChild(mediaEl);
+      lbCaption.textContent = caption || '';
+      lightbox.classList.add('open');
+    }
+
+    function closeLightbox() {
+      if (lbAudio) { lbAudio.pause(); lbAudio = null; }
+      lightbox.classList.remove('open');
+      lbMedia.innerHTML = '';
+    }
+
+    lbClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    // Images
+    document.querySelectorAll('.card-image').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        const img = card.querySelector('img').cloneNode();
+        img.style.maxHeight = '75vh';
+        openLightbox(img, card.querySelector('.card-caption').textContent);
+      });
+    });
+
+    // Vidéos
+    document.querySelectorAll('.card-video').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', e => {
+        if (e.target.closest('.btn-play') || e.target.closest('.video-link')) return; // laisse le bouton inline et le lien fonctionner
+        const src = card.querySelector('video').src;
+        const vid = document.createElement('video');
+        vid.src = src; vid.controls = true; vid.autoplay = true;
+        vid.muted = false; vid.style.maxHeight = '75vh'; vid.style.width = '100%';
+        openLightbox(vid, card.querySelector('.card-caption').textContent);
+      });
+    });
+
+    // Audios
+    document.querySelectorAll('.card-audio').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', e => {
+        if (e.target.closest('.btn-play') || e.target.closest('.audio-track') || e.target.closest('.audio-link')) return;
+        const src   = card.dataset.src;
+        const title = card.querySelector('.audio-title').textContent;
+
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:100%;background:var(--vert);padding:24px;';
+
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = 'font-size:0.9rem;color:var(--rouge);margin-bottom:16px;letter-spacing:0.05em;';
+        titleEl.textContent = title;
+
+        const controls = document.createElement('div');
+        controls.style.cssText = 'display:flex;align-items:center;gap:14px;';
+
+        const btn  = document.createElement('button');
+        btn.className = 'btn-play';
+        btn.textContent = '▶';
+        btn.style.cssText = 'background:var(--rouge);color:var(--vert);border:none;width:40px;height:40px;cursor:pointer;font-size:1rem;flex-shrink:0;';
+
+        const track = document.createElement('div');
+        track.style.cssText = 'flex:1;height:4px;background:rgba(255,0,0,0.25);border-radius:2px;overflow:hidden;cursor:pointer;';
+        const fill = document.createElement('div');
+        fill.style.cssText = 'height:100%;width:0%;background:var(--rouge);border-radius:2px;';
+        track.appendChild(fill);
+
+        const time = document.createElement('span');
+        time.style.cssText = 'font-size:0.65rem;color:var(--rouge);white-space:nowrap;';
+        time.textContent = '0:00';
+
+        controls.appendChild(btn); controls.appendChild(track); controls.appendChild(time);
+        wrap.appendChild(titleEl); wrap.appendChild(controls);
+
+        const audio = new Audio(src);
+        lbAudio = audio;
+        let playing = false, raf = null;
+
+        function fmt(s) { return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'); }
+        function tick() {
+          if (audio.duration) { fill.style.width=(audio.currentTime/audio.duration*100)+'%'; time.textContent=fmt(audio.currentTime)+' / '+fmt(audio.duration); }
+          if (playing) raf = requestAnimationFrame(tick);
+        }
+        audio.addEventListener('ended', () => { playing=false; btn.textContent='▶'; fill.style.width='0%'; cancelAnimationFrame(raf); });
+        track.addEventListener('click', e => { if(audio.duration){ audio.currentTime=(e.offsetX/track.offsetWidth)*audio.duration; } });
+        btn.addEventListener('click', () => {
+          if (playing) { audio.pause(); playing=false; btn.textContent='▶'; cancelAnimationFrame(raf); }
+          else { audio.play().catch(()=>{}); playing=true; btn.textContent='■'; raf=requestAnimationFrame(tick); }
+        });
+
+        openLightbox(wrap, '');
+        // Autoplay
+        audio.play().catch(()=>{}); playing=true; btn.textContent='■'; raf=requestAnimationFrame(tick);
+      });
+    });
+
+  </script>
+
+</body>
+</html>
